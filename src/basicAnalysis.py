@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 import alpaca_trade_api as tradeapi
 import time
 import os
-import json
 
 class BasicTradingAnalysis:
     """Simple trading analysis for a select number of stocks to track performance"""
@@ -359,7 +358,7 @@ class BasicTradingAnalysis:
 
         return result
     
-    def run_analysis(self, universe_type='starter', max_stocks=None, batch_size=50, save_progress=True):
+    def run_analysis(self, universe_type='starter', max_stocks=None, batch_size=50, save_progress=True, results_folder = 'analysis_results'):
         """Run analysis on all stocks"""
         print("🚀 Starting Basic Analysis Stocks")
         print("=" * 50)
@@ -415,7 +414,7 @@ class BasicTradingAnalysis:
                 time.sleep(0.2)
 
             if save_progress and batch_results:
-                self.save_batch_results(batch_results, batch_num)
+                self.save_batch_results(batch_results, batch_num, results_folder)
             
             print(f"\n✅ Batch {batch_num} complete: {len(batch_results)} successful, {len(batch_stocks) - len(batch_results)} failed")
 
@@ -435,10 +434,10 @@ class BasicTradingAnalysis:
         
         return results
     
-    def save_batch_results(self, batch_results, batch_num):
+    def save_batch_results(self, batch_results, batch_num, results_folder):
         """Save intermediate batch results"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        results_folder = "analysis_results/batches"
+        results_folder = f"../{results_folder}/batches"
         filename = os.path.join(results_folder, f"batch_{batch_num}_{timestamp}.csv")
 
         df_data = []
@@ -497,66 +496,3 @@ class BasicTradingAnalysis:
             'total_analyzed': len(results)
         }
     
-def load_config():
-    """Load configuration from a JSON file"""
-    with open('config.json', 'r') as f:
-        return json.load(f)
-
-if __name__ == "__main__":
-    config = load_config()
-    results_folder = config['settings']['results_folder']
-    os.makedirs(results_folder, exist_ok=True)
-    os.makedirs(results_folder + "/batches", exist_ok=True)
-    config = load_config()
-    framework = BasicTradingAnalysis(config['alpaca']['api_key'], config['alpaca']['secret'])
-    results = framework.run_analysis(universe_type='filtered')
-    recommendations = framework.generate_recommendations(results)
-
-    # Save results
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = os.path.join(results_folder, f"trading_analysis_{timestamp}.txt")
-
-    with open(filename, 'w') as f:
-        f.write("Basic Trading Analysis Results\n")
-        f.write("=" * 50 + "\n\n")
-
-        f.write(f"Analysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        f.write(f"Total Stocks Analyzed: {len(results)}\n\n")
-        f.write(f"Universe Type: Filtered\n\n")
-
-        f.write("BUY RECOMMENDATIONS:\n")
-        for stock in recommendations['buy_list']:
-            f.write(f"{stock['symbol']}: ${stock['current_price']:.2f} ")
-            f.write(f"(Signal: {stock['adjusted_signal']:.3f})\n")
-        
-        f.write("\nSELL RECOMMENDATIONS:\n")
-        for stock in recommendations['sell_list']:
-            f.write(f"{stock['symbol']}: ${stock['current_price']:.2f} ")
-            f.write(f"(Signal: {stock['adjusted_signal']:.3f})\n")
-        
-        f.write("\nHOLD RECOMMENDATIONS:\n")
-        for stock in recommendations['hold_list']:
-            f.write(f"{stock['symbol']}: ${stock['current_price']:.2f} ")
-            f.write(f"(Signal: {stock['adjusted_signal']:.3f})\n")
-    
-    print(f"\n💾 Analysis complete. Results saved to {filename}")
-
-    csv_filename =  os.path.join(results_folder, f"trading_analysis_{timestamp}.csv")
-    df_data = []
-    for result in results:
-        df_data.append({
-            'symbol': result['symbol'],
-            'price': result['current_price'],
-            'signal': result['adjusted_signal'],
-            'confidence': result['confidence'],
-            'recommendation': result['recommendation'],
-            'risk_score': result['risk_metrics']['risk_score'],
-            'volatility': result['risk_metrics']['volatility'],
-            'sma_signal': result['signals']['sma']['value'],
-            'rsi_signal': result['signals']['rsi']['value'],
-            'volume_signal': result['signals']['volume']['value']
-        })
-    
-    df = pd.DataFrame(df_data)
-    df.to_csv(csv_filename, index=False)
-    print(f"💾 CSV summary saved to {csv_filename}")

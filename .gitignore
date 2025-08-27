@@ -1,3 +1,7 @@
 analysis_results/
 keyinfo.txt
 config.json
+.venv/
+__pycache__/
+*.pyc
+*.pyo
