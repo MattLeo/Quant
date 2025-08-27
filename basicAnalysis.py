@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import alpaca_trade_api as tradeapi
 import time
 import os
+import json
 
 class BasicTradingAnalysis:
     """Simple trading analysis for a select number of stocks to track performance"""
@@ -108,17 +109,6 @@ class BasicTradingAnalysis:
         print(f"   Excluded: {excluded_counts}")
         print(f"   Remaining: {len(filtered)} symbols")
         return filtered
-    
-    def is_valid_price_range(self, symbol):
-        """Quick price check to filter penny stocks"""
-        try:
-            quote = self.api.get_latest_trade(symbol)
-            if quote and quote.price >= 5.0:
-                return True
-        except:
-            pass
-        return False
-    
 
     def get_stock_data(self, symbol, days=120):
         """Get historical data for analysis"""
@@ -506,12 +496,19 @@ class BasicTradingAnalysis:
             'hold_list': hold_recommendations,
             'total_analyzed': len(results)
         }
+    
+def load_config():
+    """Load configuration from a JSON file"""
+    with open('config.json', 'r') as f:
+        return json.load(f)
 
 if __name__ == "__main__":
-    results_folder = "analysis_results"
+    config = load_config()
+    results_folder = config['settings']['results_folder']
     os.makedirs(results_folder, exist_ok=True)
-    os.makedirs("analysis_results/batches", exist_ok=True)
-    framework = BasicTradingAnalysis('PK96O21BK6P6GLX8A3WV', 'Ctf0DSkrxFKeSyF9xQPCOMnHDn2m5uTU8UgabstR')
+    os.makedirs(results_folder + "/batches", exist_ok=True)
+    config = load_config()
+    framework = BasicTradingAnalysis(config['alpaca']['api_key'], config['alpaca']['secret'])
     results = framework.run_analysis(universe_type='filtered')
     recommendations = framework.generate_recommendations(results)
 
