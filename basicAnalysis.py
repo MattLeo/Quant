@@ -110,7 +110,7 @@ class BasicTradingAnalysis:
         print(f"   Remaining: {len(filtered)} symbols")
         return filtered
 
-    def get_stock_data(self, symbol, days=120):
+    def get_stock_data(self, symbol, days=183):
         """Get historical data for analysis"""
 
         try:

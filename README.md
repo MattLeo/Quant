@@ -7,7 +7,7 @@ Start with basic layers to establish the core framework:
 ```python
 # Basic implementation structure
 basic_layers = {
-    'universe': 'Top 100 liquid stocks',
+    'universe': 'all non-penny-stock NASDAQ and NYSE equities',
     'signals': ['SMA crossover', 'RSI', 'Volume'],
     'timeframe': '6 months daily data',
     'risk': 'Simple stop losses'
