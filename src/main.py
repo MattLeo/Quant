@@ -1,6 +1,7 @@
 from basicAnalysis import BasicTradingAnalysis
 from backend.data_access import TradingDAO
 from backend.init_db import init_database
+from trading_manager import TradingManager
 import os
 from datetime import datetime
 import pandas as pd
@@ -10,15 +11,17 @@ import glob
 print("Imports successful")
 
 def setup_folders(results_folder):
+    project_root = os.path.dirname(os.path.dirname(__file__))
     print(f"Setting up folders for: {results_folder}")
-    os.makedirs("../" + results_folder + "/batches", exist_ok=True)
-    os.makedirs("../" + results_folder + "/summaries", exist_ok=True)
+    os.makedirs(project_root + results_folder + "/batches", exist_ok=True)
+    os.makedirs(project_root + results_folder + "/summaries", exist_ok=True)
     print("Folders created successfully")
     return True
 
 def load_config():
     print("Loading config...")
-    config_path = "../config.json"
+    project_root = os.path.dirname(os.path.dirname(__file__))
+    config_path = f"{project_root}/config.json"
     
     if not os.path.exists(config_path):
         raise ValueError("Config file not found. Check if 'config.json' exists.")
@@ -28,16 +31,18 @@ def load_config():
         api_key = config['alpaca']['api_key']
         secret_key = config['alpaca']['secret']
         results_folder = config['settings']['results_folder']
+        universe_type = config['settings']['universe_type']
     
     print("Config loaded successfully")
-    return api_key, secret_key, results_folder
+    return api_key, secret_key, results_folder, universe_type
 
 def save_results(results, recommendations, results_folder):
     print("Saving results...")
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    project_root = os.path.dirname(os.path.dirname(__file__))
     
     # Text Summary
-    txt_filename = f"../{results_folder}/summaries/{timestamp}_summary.txt"
+    txt_filename = f"{project_root}/{results_folder}/summaries/{timestamp}_summary.txt"
     with open(txt_filename, 'w') as f:
         f.write("Basic Trading Analysis Results\n")
         f.write("=" * 50 + "\n\n")
@@ -61,7 +66,7 @@ def save_results(results, recommendations, results_folder):
             f.write(f"(Signal: {stock['adjusted_signal']:.3f})\n")
     
     # CSV Summary
-    csv_filename = f"../{results_folder}/summaries/{timestamp}_summary.csv"
+    csv_filename = f"{project_root}/{results_folder}/summaries/{timestamp}_summary.csv"
     df_data = []
     for result in results:
         df_data.append({
@@ -85,9 +90,10 @@ def save_results(results, recommendations, results_folder):
     print(f"  CSV:  {timestamp}_summary.csv")
 
 def cleanup_batch_files(results_folder):
-    batches_folder = f"../{results_folder}/batches"
+    project_root = os.path.dirname(os.path.dirname(__file__))
+    batches_folder = f"{project_root}/{results_folder}/batches"
 
-    if not os.path.exsist(batches_folder):
+    if not os.path.exists(batches_folder):
         return
     
     batch_files = glob.glob(os.path.join(batches_folder, "batch_*"))
@@ -103,16 +109,34 @@ def cleanup_batch_files(results_folder):
 
 if __name__ == "__main__":
     try:
+        # Setup phase
         init_database()
-        api_key, secret_key, results_folder = load_config()
-        setup_folders(results_folder)
+        api_key, secret_key, results_folder, universe_type = load_config()
+        ##setup_folders(results_folder)  # Probably no longer necessary
+
+        # Intitialization phase
         framework = BasicTradingAnalysis(api_key, secret_key)
-        results = framework.run_analysis(universe_type='filtered', results_folder=results_folder)
-        recommendations = framework.generate_recommendations(results)
         dao = TradingDAO()
-        dao.save_analysis_resilts(results)
+        trading_manager = TradingManager(dao, framework)
+
+        # Run analysis
+        analysis_results = trading_manager.run_full_analysis(universe_type=universe_type)
+        recommendations = analysis_results['new_opportunities']['recommendations']
+        results = analysis_results['new_opportunities']['analysis_results']
+
+        # Saving analysis findings
         save_results(results, recommendations, results_folder)
         cleanup_batch_files(results_folder)
+
+        # Show summary
+        portfolio_summary = trading_manager.get_portfolio_summary()
+        print("\n" + "=" * 50)
+        print("📋 FINAL SUMMARY")
+        print("=" * 50)
+        print(f"📈 Active Positions: {portfolio_summary.get('total_positions', 0)}")
+        if 'total_unrealized_pnl' in portfolio_summary:
+            pnl = portfolio_summary['total_unrealized_pnl']
+            print(f"💵 Total Unrealized PnL: ${pnl:.2f}")
         
     except Exception as e:
         print(f"Error: {e}")

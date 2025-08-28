@@ -420,9 +420,11 @@ class BasicTradingAnalysis:
 
             if batch_end < total_stocks:
                 time.sleep(2)
-        print(f"\n📈 ANALYSIS COMPLETE")
 
-        print("=" * 60)
+        print("\n")
+        print("=" * 50)
+        print(f"📈 ANALYSIS COMPLETE")
+        print("=" * 50)
         print(f"✅ Successfully analyzed: {len(results)}")
         print(f"❌ Failed to analyze: {len(failed_symbols)}")
         print(f"📊 Success rate: {len(results)/total_stocks*100:.1f}%")
@@ -437,7 +439,8 @@ class BasicTradingAnalysis:
     def save_batch_results(self, batch_results, batch_num, results_folder):
         """Save intermediate batch results"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        results_folder = f"../{results_folder}/batches"
+        project_root = os.path.dirname(os.path.dirname(__file__))
+        results_folder = f"{project_root}/{results_folder}/batches"
         filename = os.path.join(results_folder, f"batch_{batch_num}_{timestamp}.csv")
 
         df_data = []
@@ -458,7 +461,7 @@ class BasicTradingAnalysis:
     def generate_recommendations(self, results):
         """Generate recommendations based on analysis results"""
         print("\n" + "=" * 50)
-        print("📋 FINAL RECOMMENDATIONS")
+        print("📝 FINAL RECOMMENDATIONS")
         print("=" * 50)
 
         buy_recommendations = [r for r in results if r['recommendation'] == "BUY"]

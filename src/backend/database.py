@@ -10,7 +10,7 @@ class DatabaseManager:
             db_path = os.path.join(project_root, db_path)
         
         self.engine = create_engine(f'sqlite:///{db_path}', echo=False)
-        self.Session = sessionmaker(bind=self.engine)
+        self.SessionLocal = sessionmaker(bind=self.engine)
 
     def create_tables(self):
         """Create all tables"""

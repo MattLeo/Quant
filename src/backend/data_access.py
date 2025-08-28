@@ -6,7 +6,7 @@ class TradingDAO:
     def __init__(self):
         self.db = db_manager
 
-    def save_analysis_resilts(self, results):
+    def save_analysis_results(self, results):
         """Save analysis results to the database"""
         session = self.db.get_session()
         try:
@@ -14,10 +14,10 @@ class TradingDAO:
                 analysis_result = AnalysisResult(
                     symbol = result['symbol'],
                     analysis_date = datetime.now(),
-                    singal_strength = result['adjusted_signal'],
+                    signal_strength = result['adjusted_signal'],
                     confidence = result['confidence'],
                     recommendation = result['recommendation'],
-                    current_pricce = result['current_price'],
+                    current_price = result['current_price'],
                     sma_signal = result['signals']['sma']['value'],
                     rsi_signal = result['signals']['rsi']['value'],
                     volume_signal = result['signals']['volume']['value'],
@@ -29,12 +29,12 @@ class TradingDAO:
             print(f"Saved {len(results)} analysis results to database")
         except Exception as e:
             session.rollback()
-            print(f"Error saveing results: {e}")
+            print(f"Error saving results: {e}")
             raise e
         finally:
             self.db.close_session(session)
 
-    def get_active_position(self):
+    def get_active_positions(self):
         """Get all active positions"""
         session =self.db.get_session()
         try:
@@ -76,5 +76,64 @@ class TradingDAO:
             print(f"Error creating position: {e}")
             raise
 
+        finally:
+            self.db.close_session(session)
+
+    def record_trade(self, position_id, symbol, action, quantity, price, reason):
+        """Reacord a trade transaction"""
+        session = self.db.get_session()
+        try:
+            trade = Trade(
+                position_id = position_id,
+                symbol = symbol,
+                action = action,
+                quantity = quantity,
+                price = price,
+                reason = reason
+            )
+            session.add(trade)
+            session.commit()
+            return trade.id
+        finally:
+            self.db.close_session(session)
+    
+    def close_position(self, position_id):
+        """Mark position as inactive"""
+        session = self.db.get_session()
+        try:
+            position = session.query(Position).filter(Position.id == position_id).first()
+            if position:
+                position.is_active = False
+                session.commit()
+        finally:
+            self.db.close_session(session)
+    
+    def update_stop_loss(self, position_id, new_stop, reason):
+        """Update stop loss for a porfolio"""
+        session = self.db.get_session()
+        try:
+            position = session.query(Position).filter(Position.id == position_id).first()
+            if position:
+                update = StopLossUpdate(
+                    position_id = position_id,
+                    old_stop_price = position.current_stop_loss,
+                    new_stop_price = new_stop,
+                    update_date = datetime.now(),
+                    reason = reason,
+                    current_price = 0 # TODO pass current price into method
+                )
+                session.add(update)
+
+                position.current_stop_loss = new_stop
+                session.commit()
+        finally:
+            self.db.close_session(session)
+
+    def get_owned_symbols(self):
+        """Get list of owned symbols"""
+        session = self.db.get_session()
+        try:
+            positions = session.query(Position).filter(Position.is_active == True).all()
+            return [pos.symbol for pos in positions]
         finally:
             self.db.close_session(session)

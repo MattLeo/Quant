@@ -37,9 +37,10 @@ class Trade(Base):
 
 class AnalysisResult(Base):
     __tablename__ = 'analysis_results'
-    
+
     id = Column(Integer, primary_key=True)
     symbol = Column(String(10), nullable=False)
+    current_price = Column(Float, nullable=False)
     analysis_date = Column(DateTime, default=datetime.utcnow)
     signal_strength = Column(Float, nullable=False)
     confidence = Column(Float, nullable=False)
