@@ -1,22 +1,44 @@
 from backend.data_access import TradingDAO
 from backend.models import Position, Trade
 from datetime import datetime
+from execution_engine import ExecutionEngine
 
 class TradingManager:
-    def __init__(self, dao, analysis_framework):
+    def __init__(self, dao, analysis_framework, api_key=None, secret_key=None, paper_trading=True, auto_execute=False):
         self.dao = dao
         self.framework = analysis_framework
+        self.auto_execute = auto_execute
+
+        if api_key and secret_key:
+            self.execution_engine = ExecutionEngine(api_key, secret_key, paper_trading)
+        else:
+            self.execution_engine = None
     
-    def run_full_analysis(self, universe_type):
-        """Run completed two-phase analysis"""
+    def run_full_analysis(self, universe_type, execute_trades=False):
+        """Run completed two-phase analysis with optional trade execution"""
         print("=== PHASE 1: POSITION MANAGEMENT ===")
         phase1_results = self._manage_existing_positions()
+
+        executed_sells = []
+        failed_sells = []
+        if execute_trades and phase1_results.get('executed_sells'):
+            executed_sells, failed_sells = self.execute_stop_losses(phase1_results['stop_triggers'])
+
         print("=== PHASE 2: NEW OPPORTUNITIES ===")
         phase2_results = self._find_new_opportunities(universe_type)
 
+        executed_buys = []
+        failed_buys = []
+        if execute_trades and phase2_results['recommendations']['buy_list']:
+            executed_buys, failed_buys = self.execute_buy_recommendations(phase2_results['recommendations']['buy_list'])
+
         return {
             'position_management': phase1_results,
-            'new_opportunities': phase2_results
+            'new_opportunities': phase2_results,
+            'executed_trades': {
+                'buys': executed_buys,
+                'sells': executed_sells
+            }
         }
     
     def _manage_existing_positions(self):
@@ -59,7 +81,8 @@ class TradingManager:
             'stop_losses_triggered': len(executed_sells),
             'trailing_stops_updated': len(updated_stops),
             'executed_sells': executed_sells,
-            'updated_stops': updated_stops
+            'updated_stops': updated_stops,
+            'stop_triggers': stop_triggers
         }
     
     def _find_new_opportunities(self, universe_type):
@@ -101,7 +124,7 @@ class TradingManager:
             try:
                 data = self.framework.get_stock_data(symbol, days=5)
                 if data is not None and len(data) > 0:
-                    current_prices[symbol] = float(data['Close'].iloc[-1])
+                    current_prices[symbol] = float(data['close'].iloc[-1])
             except Exception as e:
                 print(f"Cound not get price for {symbol}: {e}")
         return current_prices
@@ -126,7 +149,7 @@ class TradingManager:
             if current_price is None:
                 continue
 
-            stop_loss = position.stop_loss
+            stop_loss = position.current_stop_loss
             if current_price <= stop_loss:
                 stop_triggers.append({
                     'position': position,
@@ -136,6 +159,51 @@ class TradingManager:
                 })
 
         return stop_triggers
+    
+    def execute_stop_losses(self, stop_triggers):
+        """Execute stop losses via Alpaca API"""
+        if not self.execution_engine:
+            return self._execute_stop_loss_sells(stop_triggers)
+
+        executed_sells = []
+        failed_orders = []
+
+        for trigger in stop_triggers:
+            position = trigger['position']
+
+            print(f"Executing stop loss for {position.symbol}...")
+            order_result = self.execution_engine.place_sell_order(
+                symbol = position.symbol,
+                quantity = position.quantity,
+                reason = 'STOP_LOSS'
+            )
+
+            if order_result['success']:
+                trade_id = self.dao.record_trade(
+                    position_id = position.id,
+                    symbol = position.symbol,
+                    action = 'SELL',
+                    quantity = position.quantity,
+                    price = order_result['filled_avg_price'],
+                    reason = 'STOP_LOSS'
+                )
+                self.dao.close_position(position.id)
+                
+                executed_sells.append({
+                    'symbol': position.symbol,
+                    'quantity': position.quantity,
+                    'price': order_result['filled_avg_price'],
+                    'order_id': order_result['order_id'],
+                    'trade_id': trade_id
+                })
+                print(f"Stop loss executed: {position.symbol} sold at ${order_result['filled_avg_price']:.2f}")
+            else:
+                failed_orders.append({
+                    'symbol': position.symbol,
+                    'error': order_result['error']
+                })
+                print(f"Failed to execute stop loss for {position.symbol}: {order_result['error']}")
+        return executed_sells, failed_orders
     
     def _execute_stop_loss_sells(self, stop_triggers):
         """Execute stop loss sells"""
@@ -189,6 +257,63 @@ class TradingManager:
 
         return updated_stops
     
+    def execute_buy_recommendations(self, buy_recommendations):
+        """Execute buy recommendations via Alpaca API"""
+        if not self.execution_engine or not self.auto_execute:
+            print("Auto-execution disabeld. Buy recommendations available for manual review.")
+            return []
+        
+        executed_buys = []
+        failed_orders = []
+
+        for recommendation in buy_recommendations:
+            symbol = recommendation['symbol']
+            signal_strength = recommendation['adjusted_signal']
+            confidence = recommendation['confidence']
+            current_price = recommendation['current_price']
+
+            print(f"Executing buy order for {symbol}...")
+
+            order_result = self.execution_engine.place_buy_order(
+                symbol = symbol,
+                signal_strength = signal_strength,
+                confidence = confidence,
+                current_price = current_price
+            )
+
+            if order_result['success'] and order_result['filled_qty'] > 0:
+                volatility = recommendation['risk_metrics']['volatility']
+                stop_price = self._calculate_stop_loss(
+                    order_result['filled_avg_price'],
+                    volatility
+                )
+
+                position_id = self.dao.create_position(
+                    symbol = symbol,
+                    quantity = order_result['filled_qty'],
+                    entry_price = order_result['filled_avg_price'],
+                    stop_loss_price = stop_price
+                )
+
+                executed_buys.append({
+                    'symbol': symbol,
+                    'quantity': order_result['filled_qty'],
+                    'price': order_result['filled_avg_price'],
+                    'stop_loss': stop_price,
+                    'order_id': order_result['order_id'],
+                    'position_id': position_id
+                })
+
+                print(f"Buy order executed: {symbol} - {order_result['filled_qty']:.2f} bought at ${order_result['filled_avg_price']:.2f}")
+
+            else:
+                failed_orders.append({
+                    'symbol': symbol,
+                    'error': order_result.get('error', 'Unknown error')
+                })
+                print(f"Failed to execute buy order for {symbol}: {order_result.get('error', 'Unknown error')}")
+        return executed_buys, failed_orders
+    
     def get_portfolio_summary(self):
         """Get summary of current portfolio"""
         active_positions = self.dao.get_active_positions()
@@ -198,7 +323,7 @@ class TradingManager:
         
         total_value = 0
         total_cost = 0
-        position_symbols = [pos.symbols for pos in active_positions]
+        position_symbols = [pos.symbol for pos in active_positions]
         current_prices = self._get_current_prices(position_symbols)
 
         portfolio_data = []

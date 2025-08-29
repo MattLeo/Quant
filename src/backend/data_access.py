@@ -44,7 +44,7 @@ class TradingDAO:
             print(f"Error getting active positions: {e}")
             raise e
         
-    def create_position(self, symbol, quantity, entry_price, entry_date, current_stop_loss):
+    def create_position(self, symbol, quantity, entry_price, entry_date=datetime.now(), stop_loss_price=None):
         """Create a new position"""
         session = self.db.get_session()
         try:
@@ -52,8 +52,8 @@ class TradingDAO:
                 symbol = symbol,
                 quantity = quantity,
                 entry_price = entry_price,
-                entry_date = datetime.now(),
-                current_stop_loss = current_stop_loss,
+                entry_date = entry_date,
+                current_stop_loss = stop_loss_price,
                 is_active = True
             )
             session.add(position)
@@ -116,8 +116,8 @@ class TradingDAO:
             if position:
                 update = StopLossUpdate(
                     position_id = position_id,
-                    old_stop_price = position.current_stop_loss,
-                    new_stop_price = new_stop,
+                    old_stop_loss = position.current_stop_loss,
+                    new_stop_loss = new_stop,
                     update_date = datetime.now(),
                     reason = reason,
                     current_price = 0 # TODO pass current price into method

@@ -108,6 +108,9 @@ def cleanup_batch_files(results_folder):
         print("Batch files cleaned up successfully")
 
 if __name__ == "__main__":
+    PAPER_TRADING = True
+    AUTO_EXECUTE = True
+
     try:
         # Setup phase
         init_database()
@@ -117,14 +120,47 @@ if __name__ == "__main__":
         # Intitialization phase
         framework = BasicTradingAnalysis(api_key, secret_key)
         dao = TradingDAO()
-        trading_manager = TradingManager(dao, framework)
+        trading_manager = TradingManager(
+            dao,
+            framework,
+            api_key=api_key,
+            secret_key=secret_key,
+            paper_trading=PAPER_TRADING,
+            auto_execute=AUTO_EXECUTE
+        )
+
+        print(f"Execution engine created: {trading_manager.execution_engine is not None}")
+        print(f"Auto execute enabled: {trading_manager.auto_execute}")
+
+        if trading_manager.execution_engine:
+            account_info = trading_manager.execution_engine.get_account_info()
+            if account_info:
+                print(f"Account connected - Buying power: ${account_info['buying_power']}")
+            else:
+                print("Account connection failed")
 
         # Run analysis
-        analysis_results = trading_manager.run_full_analysis(universe_type=universe_type)
+        analysis_results = trading_manager.run_full_analysis(universe_type=universe_type, execute_trades=AUTO_EXECUTE)
         recommendations = analysis_results['new_opportunities']['recommendations']
         results = analysis_results['new_opportunities']['analysis_results']
 
+        print("=" * 50)
+        print("⚡ TRADES EXCUTED")
+        print("=" * 50)
+        executed_trades = analysis_results.get('executed_trades', {})
+        if executed_trades.get('buys'):
+            print(f"Executed {len(executed_trades['buys'])} buy orders")
+        else:
+            print(f"No buy orders made")
+        if executed_trades.get('sells'):
+            print(f"Executed {len(executed_trades['sells'])} sell orders")
+        else:
+            print(f"No sell orders made")
+
         # Saving analysis findings
+        print("\n" + "=" * 50)
+        print("💾 SAVING RESULTS")
+        print("=" * 50)
         save_results(results, recommendations, results_folder)
         cleanup_batch_files(results_folder)
 

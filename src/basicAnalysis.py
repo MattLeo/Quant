@@ -351,11 +351,12 @@ class BasicTradingAnalysis:
             'risk_metrics': risk_metrics
         }
 
+        """ # Hiding this as it is no longer necessary to display this in the log
         print(f"    📈 Price: ${current_price:.2f}")
         print(f"    📊 Signal: {adjusted_signal:.3f} (Confidence: {total_confidence:.2f})")
         print(f"    🎯 Recommendation: {recommendation}")
         print(f"    ⚠️ Risk Score: {risk_metrics['risk_score']:.2f}")
-
+        """
         return result
     
     def run_analysis(self, universe_type='starter', max_stocks=None, batch_size=50, save_progress=True, results_folder = 'analysis_results'):
