@@ -71,9 +71,10 @@ advanced_layers = {
 ## 🎯 Implementation Roadmap
 
 ### Week 1: Core Framework
-- [ ] Set up basic signal calculation
-- [ ] Implement simple aggregation
-- [ ] Test with 5-10 stocks
+- [x] Set up basic signal calculation
+- [x] Implement simple aggregation
+- [x] Test with 5-10 stocks
+- [ ] Frontend Dashboard using React
 
 ### Week 2: Signal Enhancement
 - [ ] Add more technical indicators
