@@ -1,17 +1,22 @@
-from flask import flask, jsonify, request
+from flask import Flask, jsonify, request
 from flask_cors import CORS
-from datetime import datetime
 import json
+import os
 
 from backend.data_access import TradingDAO
-from .trading_manager import TradingManager
-from .basicAnalysis import BasicTradingAnalysis
+from backend.init_db import init_database
+from trading_manager import TradingManager
+from basicAnalysis import BasicTradingAnalysis
 
-app = flask.Flask(__name__)
+app = Flask(__name__)
 CORS(app)
 
 def load_config():
-    with open('../config.json', 'r') as config_file:
+
+    project_root = os.path.dirname(os.path.dirname(__file__))
+    config_path = f"{project_root}/config.json"
+
+    with open(config_path, 'r') as config_file:
         config = json.load(config_file)
         api_key = config['alpaca']['api_key']
         secret_key = config['alpaca']['secret']
@@ -20,6 +25,7 @@ def load_config():
     
     return api_key, secret_key, results_folder, universe_type
 
+init_database()
 dao = TradingDAO()
 api_key, secret_key, results_folder, universe_type = load_config()
 framework = BasicTradingAnalysis(api_key, secret_key)
@@ -34,7 +40,7 @@ def get_portfolio():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('api/analysis/run', methods=['POST'])
+@app.route('/api/analysis/run', methods=['POST'])
 def run_analysis():
     """Run full analysis"""
     try:
@@ -46,7 +52,7 @@ def run_analysis():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
-@app.route('api/positions', methods=['GET'])
+@app.route('/api/positions', methods=['GET'])
 def get_positions():
     """Get active positions"""
     try:
@@ -63,7 +69,7 @@ def get_positions():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('api/trades', methods=['GET'])
+@app.route('/api/trades', methods=['GET'])
 def get_trades():
     """Get trade history"""
     # Needs to create this function in DAO
