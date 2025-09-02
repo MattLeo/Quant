@@ -3,11 +3,15 @@ from flask_cors import CORS
 import json
 import os
 import traceback
+import logging
+from logging.handlers import MemoryHandler
+from io import StringIO
 
 from backend.data_access import TradingDAO
 from backend.init_db import init_database
 from trading_manager import TradingManager
 from basicAnalysis import BasicTradingAnalysis
+import logging
 
 app = Flask(__name__)
 CORS(app, resources={
@@ -32,7 +36,29 @@ def load_config():
     
     return api_key, secret_key, results_folder, universe_type
 
+def init_logger():
+    logger = logging.getLogger('console_log')
+    logger.setLevel(logging.DEBUG)
+
+    if not logger.handlers:
+        memory_buffer = StringIO()
+        memory_stream_handler = logging.StreamHandler(memory_buffer)
+        memory_stream_handler.setLevel(logging.INFO)
+        logger.addHandler(memory_stream_handler)
+
+        memory_handler = MemoryHandler(
+            capacity=10000,
+            flushLevel=logging.CRITICAL,
+            target=memory_stream_handler
+        )
+        logger.addHandler(memory_handler)
+        logger.memory_buffer = memory_buffer
+        logger.memory_handler = memory_handler
+
+    return logger
+
 init_database()
+logger = init_logger()
 dao = TradingDAO()
 api_key, secret_key, results_folder, universe_type = load_config()
 framework = BasicTradingAnalysis(api_key, secret_key)
@@ -89,6 +115,26 @@ def get_positions():
             'current_stop_loss': pos.current_stop_loss,
             'is_active': pos.is_active
         } for pos in positions])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/logs', methods=['GET'])
+def get_logs():
+    """Get analysis logs"""
+    try:
+        logger.memory_handler.flush()
+        logs = logger.memory_buffer.getvalue()
+        return jsonify({"logs": logs})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/logs/clear', methods=['POST'])
+def clear_logs():
+    """Clear analysis logs"""
+    try:
+        logger.memory_buffer.truncate(0)
+        logger.memory_buffer.seek(0)
+        return jsonify({"message": "Logs cleared successfully"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

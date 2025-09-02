@@ -4,6 +4,9 @@ from datetime import datetime, timedelta
 import alpaca_trade_api as tradeapi
 import time
 import os
+import logging
+
+logger = logging.getLogger("console_log")
 
 class BasicTradingAnalysis:
     """Simple trading analysis for a select number of stocks to track performance"""
@@ -41,6 +44,7 @@ class BasicTradingAnalysis:
         ]
 
         print(f"[*] Analyzing {len(starter_stocks)} stocks...")
+        logger.info(f"[*] Analyzing {len(starter_stocks)} stocks...\n")
         return starter_stocks
     
     def get_all_tradable_symbols(self, filters=None):
@@ -57,10 +61,12 @@ class BasicTradingAnalysis:
                         'exchange': asset.exchange
                     })
             print(f"    Found {len(all_symbols)} total tradable symbols")
+            logger.info(f"[*] Found {len(all_symbols)} total tradable symbols [*]\n")
 
             if filters:
                 filtered_symbols = self.apply_universe_filters(all_symbols, filters)
                 print(f"    After Filtering: {len(filtered_symbols)} symbols remain")
+                logger.info(f"[*] After Filtering: {len(filtered_symbols)} symbols remain [*]\n")
                 return filtered_symbols
             return [s['symbol'] for s in all_symbols]
         except Exception as e:
@@ -120,6 +126,7 @@ class BasicTradingAnalysis:
             start_date = start_datetime.date().isoformat()
 
             print(f"   Fetching data from {start_date} to {end_date}")
+            logger.info(f"  Fetching data from {start_date} to {end_date}\n")
 
             bars = self.api.get_bars(
                 symbol,
@@ -150,10 +157,12 @@ class BasicTradingAnalysis:
             data = data.sort_index()
 
             print(f"   ✓ Gathered {len(data)} days of data for {symbol}")
+            logger.info(f"  ✓ Gathered {len(data)} days of data for {symbol}\n")
             return data
         
         except Exception as e:
             print(f"   ✗ Error fetching data for {symbol}: {e}")
+            logger.info(f"   ✗ Error fetching data for {symbol}: {e}\n")
             return None
     
     def calculate_sma(self, data):
@@ -296,11 +305,13 @@ class BasicTradingAnalysis:
     def analyze_stock(self, symbol):
         """Analyze a single stock with all signals"""
         print(f"\n[*] Analyzing {symbol}...")
+        logger.info(f"\n[*] Analyzing {symbol}...\n")
 
         # Getting data
         data = self.get_stock_data(symbol)
         if data is None or len(data) < 50: 
             print(f"    ✗ Insufficient data for {symbol}")
+            logger.info(f"    ✗ Insufficient data for {symbol}\n")
             return None
         
         # Calculating all signals
@@ -384,6 +395,8 @@ class BasicTradingAnalysis:
 
         total_stocks = len(stocks)
         print(f"📊 Total stocks to analyze: {total_stocks}")
+        logger.info(f"Total stocks to analyze: {total_stocks}\n")
+
         print(f"🔄 Processing in batches of {batch_size}")
 
         results = []
@@ -403,6 +416,7 @@ class BasicTradingAnalysis:
             for i, symbol in enumerate(batch_stocks, 1):
                 progress = batch_start + i
                 print(f"[{progress}/{total_stocks}] ", end="")
+                logger.info(f"[{progress}/{total_stocks}]\n")
 
                 result = self.analyze_stock(symbol)
 
