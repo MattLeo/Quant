@@ -74,7 +74,7 @@ advanced_layers = {
 - [x] Set up basic signal calculation
 - [x] Implement simple aggregation
 - [x] Test with 5-10 stocks
-- [ ] Frontend Dashboard using React
+- [x] Frontend Dashboard using React
 
 ### Week 2: Signal Enhancement
 - [ ] Add more technical indicators

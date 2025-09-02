@@ -1,5 +1,5 @@
 import React from 'react'
-import {Card, CardContent, Typograhpy, Box} from '@mui/material';
+import {Card, CardContent, Typography, Box} from '@mui/material';
 
 function PortfolioSummary({portfolio}) {
     if (!portfolio) return <div>Loading...</div>;
@@ -9,24 +9,24 @@ function PortfolioSummary({portfolio}) {
     return (
         <Card>
             <CardContent>
-                <Typograhpy variant="h5" component="div">
+                <Typography variant="h5" component="div">
                     PortfolioSummary
-                </Typograhpy>
+                </Typography>
 
                 <Box sx={{mt: 2}}>
-                    <Typograhpy variant="body1">
+                    <Typography variant="body1">
                         Active Positions: {portfolio.total_positions || 0}
-                    </Typograhpy>
-                    <Typograhpy variant="body1">
+                    </Typography>
+                    <Typography variant="body1">
                         Total Value: ${portfolio.total_value?.toFixed(2) || '0.00'}
-                    </Typograhpy>
-                    <Typograhpy variant="body1">
+                    </Typography>
+                    <Typography variant="body1">
                         Total Value: ${portfolio.total_cost?.toFixed(2) || '0.00'}
-                    </Typograhpy>
+                    </Typography>
 
-                    <Typograhpy variant="body1" style={{color: pnlColor}}>
+                    <Typography variant="body1" style={{color: pnlColor}}>
                         Unrealized P&L: ${portfolio.total_unrealized_pnl?.toFixed(2) || '0.00'}
-                    </Typograhpy>                    
+                    </Typography>                    
                 </Box>
             </CardContent>
         </Card>

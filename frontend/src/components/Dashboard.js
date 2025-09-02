@@ -3,7 +3,7 @@ import axios from 'axios';
 import PortfolioSummary from './PortfolioSummary';
 import PositionsList from './PositionsList';
 import AnalysisControls from './AnalysisControls';
-import ReccomendationsList from './RecommendationsList';
+import RecommendationsList from './RecommendationsList'
 
 const API_BASE = 'http://localhost:8282/api';
 
@@ -62,7 +62,7 @@ function Dashboard() {
                 <PortfolioSummary portfolio={porfolio} />
                 <PositionsList positions={positions} />
                 <AnalysisControls onRunAnalysis={runAnalysis} />
-                <ReccomendationsList recommendations={recommendations} />
+                <RecommendationsList recommendations={recommendations} />
             </div>
         </div>
     );
