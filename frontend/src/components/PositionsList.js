@@ -3,7 +3,7 @@ import React from 'react';
 function PositionsList ({ positions }) {
     return (
         <div style={{ padding: '20px' , border: '1px solid #ddd', margin: '10px'}}>
-            <h3> ACtive Positions ({positions?.length || 0})</h3>
+            <h3> Active Positions ({positions?.length || 0})</h3>
             {positions?.length > 0 ? (
                 <div>
                     {positions.map((position) => (

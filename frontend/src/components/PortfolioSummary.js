@@ -10,7 +10,7 @@ function PortfolioSummary({portfolio}) {
         <Card>
             <CardContent>
                 <Typography variant="h5" component="div">
-                    PortfolioSummary
+                    Portfolio Summary
                 </Typography>
 
                 <Box sx={{mt: 2}}>
@@ -21,7 +21,7 @@ function PortfolioSummary({portfolio}) {
                         Total Value: ${portfolio.total_value?.toFixed(2) || '0.00'}
                     </Typography>
                     <Typography variant="body1">
-                        Total Value: ${portfolio.total_cost?.toFixed(2) || '0.00'}
+                        Total Cost: ${portfolio.total_cost?.toFixed(2) || '0.00'}
                     </Typography>
 
                     <Typography variant="body1" style={{color: pnlColor}}>

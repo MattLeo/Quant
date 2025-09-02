@@ -30,7 +30,7 @@ class TradingManager:
         executed_buys = []
         failed_buys = []
         if execute_trades and phase2_results['recommendations']['buy_list']:
-            executed_buys, failed_buys = self.execute_buy_recommendations(phase2_results['recommendations']['buy_list'])
+            executed_buys, failed_buys = self.execute_buy_recommendations(phase2_results['recommendations']['buy_list'], execute_trades=execute_trades)
 
         return {
             'position_management': phase1_results,
@@ -257,11 +257,11 @@ class TradingManager:
 
         return updated_stops
     
-    def execute_buy_recommendations(self, buy_recommendations):
+    def execute_buy_recommendations(self, buy_recommendations, execute_trades=False):
         """Execute buy recommendations via Alpaca API"""
         if not self.execution_engine or not self.auto_execute:
             print("Auto-execution disabeld. Buy recommendations available for manual review.")
-            return []
+            return [], []
         
         executed_buys = []
         failed_orders = []

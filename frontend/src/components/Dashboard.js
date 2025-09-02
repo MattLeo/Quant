@@ -8,7 +8,7 @@ import RecommendationsList from './RecommendationsList'
 const API_BASE = 'http://localhost:8282/api';
 
 function Dashboard() {
-    const [porfolio, setPortfolio] = useState(null);
+    const [portfolio, setPortfolio] = useState(null);
     const [positions, setPositions] = useState([]);
     const [recommendations, setRecommendations] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -37,6 +37,7 @@ function Dashboard() {
     }
 
     const runAnalysis = async (universeType, executeTrades) => {
+        setLoading(true);
         try {
             const response = await axios.post(`${API_BASE}/analysis/run`, {
                 universe_type: universeType,
@@ -44,7 +45,7 @@ function Dashboard() {
             });
 
             setRecommendations(response.data.new_opportunities.recommendations);
-            //Refresh portfolio after running analysis
+            // Refresh portfolio after running analysis
             await fetchPortfolio();
             await fetchPositions();
         } catch (error) {
@@ -56,12 +57,12 @@ function Dashboard() {
 
     return (
         <div className='dashboard'>
-            <h1>Aglorithmic Trading Dashboard</h1>
+            <h1>Trading Dashboard</h1>
 
             <div className='dashboard-grid'>
-                <PortfolioSummary portfolio={porfolio} />
+                <PortfolioSummary portfolio={portfolio} />
                 <PositionsList positions={positions} />
-                <AnalysisControls onRunAnalysis={runAnalysis} />
+                <AnalysisControls onRunAnalysis={runAnalysis} loading={loading} />
                 <RecommendationsList recommendations={recommendations} />
             </div>
         </div>

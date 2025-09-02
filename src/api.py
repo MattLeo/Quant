@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import json
 import os
+import traceback
 
 from backend.data_access import TradingDAO
 from backend.init_db import init_database
@@ -9,7 +10,13 @@ from trading_manager import TradingManager
 from basicAnalysis import BasicTradingAnalysis
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={
+    r"/api/*": {
+        "origins": ["http://localhost:3000"],
+        "methods": ["GET", "POST", "PUT", "DELETE"],
+        "allow_headers": ["Content-Type"]
+    }
+})
 
 def load_config():
 
@@ -29,7 +36,19 @@ init_database()
 dao = TradingDAO()
 api_key, secret_key, results_folder, universe_type = load_config()
 framework = BasicTradingAnalysis(api_key, secret_key)
-trading_manager = TradingManager(api_key, secret_key, dao)
+trading_manager = TradingManager(
+    dao,
+    framework,
+    api_key=api_key,
+    secret_key=secret_key,
+    paper_trading=True,
+    auto_execute=True
+)
+
+@app.before_request
+def log_request():
+    print(f"=== REQUEST: {request.method} {request.path} ===")
+    print(f"Request headers: {dict(request.headers)}")
 
 @app.route('/api/portfolio', methods=['GET'])
 def get_portfolio():
@@ -38,6 +57,8 @@ def get_portfolio():
         summary = trading_manager.get_portfolio_summary()
         return jsonify(summary)
     except Exception as e:
+        print(f"ERROR in /api/portfolio: {str(e)}")
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/analysis/run', methods=['POST'])
@@ -50,6 +71,8 @@ def run_analysis():
         results = trading_manager.run_full_analysis(universe_type, execute_trades)
         return jsonify(results)
     except Exception as e:
+        print(f"ERROR in /api/analysis/run: {str(e)}")
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     
 @app.route('/api/positions', methods=['GET'])

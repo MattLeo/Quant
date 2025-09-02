@@ -1,19 +1,7 @@
-import React, {useState} from 'react';
-import {
-    Card, 
-    CardContent, 
-    Button, 
-    FormControl, 
-    InputLabel, 
-    Select, 
-    MenuItem, 
-    FormControlLabel, 
-    Switch,
-    Menu
-} from '@mui/material'
+import React, { useState } from 'react';
+import { Card, CardContent, Button, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
 
-
-function AnalysisControls({onRunAnalysis, loading}) {
+function AnalysisControls({ onRunAnalysis, loading }) {
     const [universeType, setUniverseType] = useState('filtered');
     const [executeTrades, setExecuteTrades] = useState(false);
 
@@ -25,17 +13,17 @@ function AnalysisControls({onRunAnalysis, loading}) {
         <Card>
             <CardContent>
                 <h3>Run Analysis</h3>
-
-                <FormControl fullWidth sx={{mb: 2}}>
+                
+                <FormControl fullWidth sx={{ mb: 2 }}>
                     <InputLabel>Universe Type</InputLabel>
                     <Select
                         value={universeType}
                         onChange={(e) => setUniverseType(e.target.value)}
-                        >
-                            <MenuItem value="starter">Starter Stocks</MenuItem>
-                            <MenuItem value="filtered">Filtered Universe</MenuItem>
-                            <MenuItem value="all">All Stocks</MenuItem>
-                        </Select>
+                    >
+                        <MenuItem value="starter">Starter Stocks</MenuItem>
+                        <MenuItem value="filtered">Filtered Universe</MenuItem>
+                        <MenuItem value="all">All Stocks</MenuItem>
+                    </Select>
                 </FormControl>
 
                 <FormControlLabel
@@ -48,10 +36,12 @@ function AnalysisControls({onRunAnalysis, loading}) {
                     label="Execute Trades Automatically"
                 />
 
-                <Button
-                    variant='contained'
+                <Button 
+                    variant="contained" 
                     onClick={handleRunAnalysis}
                     disabled={loading}
+                    fullWidth
+                    sx={{ mt: 2 }}
                 >
                     {loading ? 'Running Analysis...' : 'Run Analysis'}
                 </Button>
