@@ -137,3 +137,12 @@ class TradingDAO:
             return [pos.symbol for pos in positions]
         finally:
             self.db.close_session(session)
+
+    def get_trade_history(self):
+        """Get records of previous trades"""
+        session = self.db.get_session()
+        try:
+            trades = session.query(Trade).order_by(Trade.trade_date).all()
+            return trades
+        finally:
+            self.db.close_session(session)

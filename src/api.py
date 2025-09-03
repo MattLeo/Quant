@@ -141,8 +141,20 @@ def clear_logs():
 @app.route('/api/trades', methods=['GET'])
 def get_trades():
     """Get trade history"""
-    # Needs to create this function in DAO
-    pass
+    try:
+        trades = dao.get_trade_history()
+        return jsonify([{
+            'id': trade.id,
+            'position_id': trade.position_id,
+            'symbol': trade.symbol,
+            'action': trade.action,
+            'quantity': trade.quantity,
+            'price': trade.price,
+            'trade_date': trade.trade_date,
+            'reason': trade.reason
+        } for trade in trades])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=8282)

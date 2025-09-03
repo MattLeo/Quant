@@ -4,6 +4,8 @@ import PortfolioSummary from './PortfolioSummary';
 import PositionsList from './PositionsList';
 import AnalysisControls from './AnalysisControls';
 import RecommendationsList from './RecommendationsList'
+import TradeHistory from './TradeHistory';
+import { useRef } from 'react';
 
 const API_BASE = 'http://localhost:8282/api';
 
@@ -12,11 +14,14 @@ function Dashboard() {
     const [positions, setPositions] = useState([]);
     const [recommendations, setRecommendations] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [history, setHistory] = useState([]);
 
     useEffect(() => {
         fetchPortfolio();
         fetchPositions();
+        fetchHistory();
     }, []);
+    
 
     const fetchPortfolio = async () => {
         try {
@@ -48,10 +53,20 @@ function Dashboard() {
             // Refresh portfolio after running analysis
             await fetchPortfolio();
             await fetchPositions();
+            await fetchHistory();
         } catch (error) {
             console.error('Error running analysis:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchHistory = async () => {
+        try{
+            const response = await axios.get(`${API_BASE}/trades`);
+            setHistory(response.data);
+        } catch (error) {
+            console.error('Error fetching trade history:', error);
         }
     };
 
@@ -62,8 +77,9 @@ function Dashboard() {
             <div className='dashboard-grid'>
                 <PortfolioSummary portfolio={portfolio} />
                 <PositionsList positions={positions} />
-                <AnalysisControls onRunAnalysis={runAnalysis} loading={loading} />
+                <TradeHistory history={history} />
                 <RecommendationsList recommendations={recommendations} />
+                <AnalysisControls onRunAnalysis={runAnalysis} loading={loading} />
             </div>
         </div>
     );
