@@ -1,11 +1,10 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef, useLayoutEffect} from 'react';
 import axios from 'axios';
 import PortfolioSummary from './PortfolioSummary';
 import PositionsList from './PositionsList';
 import AnalysisControls from './AnalysisControls';
 import RecommendationsList from './RecommendationsList'
 import TradeHistory from './TradeHistory';
-import { useRef } from 'react';
 
 const API_BASE = 'http://localhost:8282/api';
 
@@ -15,12 +14,21 @@ function Dashboard() {
     const [recommendations, setRecommendations] = useState([]);
     const [loading, setLoading] = useState(false);
     const [history, setHistory] = useState([]);
+    const [positionsHeight, setPositionsHeight] = useState(null);
+    const positionsRef = useRef(null);
 
     useEffect(() => {
         fetchPortfolio();
         fetchPositions();
         fetchHistory();
     }, []);
+
+    useLayoutEffect(() => {
+        if (positionsRef.current && positions.length > 0) {
+            const height = positionsRef.current.offsetHeight;
+            setPositionsHeight(height);
+        }
+    }, [positions]);
     
 
     const fetchPortfolio = async () => {
@@ -76,8 +84,8 @@ function Dashboard() {
 
             <div className='dashboard-grid'>
                 <PortfolioSummary portfolio={portfolio} />
-                <PositionsList positions={positions} />
-                <TradeHistory history={history} />
+                <PositionsList ref={positionsRef} positions={positions} />
+                <TradeHistory history={history} maxHeight={positionsHeight} />
                 <RecommendationsList recommendations={recommendations} />
                 <AnalysisControls onRunAnalysis={runAnalysis} loading={loading} />
             </div>

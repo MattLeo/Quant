@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 
-function PositionsList ({ positions }) {
+const PositionsList = forwardRef(({ positions }, ref) => {
     return (
-        <div style={{ padding: '20px' , border: '1px solid #ddd', margin: '10px'}}>
+        <div ref={ref} style={{ padding: '20px' , border: '1px solid #ddd', margin: '10px'}}>
             <h3> Active Positions ({positions?.length || 0})</h3>
             {positions?.length > 0 ? (
                 <div>
@@ -22,6 +22,7 @@ function PositionsList ({ positions }) {
             )}
         </div>
     );
-}
+});
 
+PositionsList.displayName = 'PositionsList';
 export default PositionsList;

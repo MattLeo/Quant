@@ -1,11 +1,11 @@
 import React from 'react';
 
-function TradeHistory({ history }) {
+function TradeHistory({ history, maxHeight }) {
   return (
     <div style={{ padding: '20px', border: '1px solid #ddd', margin: '10px' }}>
       <h3>Trade History</h3>
       {history?.length > 0 ? (
-        <div style={{ overflowY: 'auto'}}>
+        <div style={{ maxHeight: maxHeight, overflowY: 'auto'}}>
           {history.map((trade) => {
             const dateObj = new Date(trade.trade_date); // use trade, not history
             const localDate = dateObj.toLocaleDateString('en-US', {
