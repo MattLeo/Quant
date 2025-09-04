@@ -11,7 +11,7 @@ const API_BASE = 'http://localhost:8282/api';
 function Dashboard() {
     const [portfolio, setPortfolio] = useState(null);
     const [positions, setPositions] = useState([]);
-    const [recommendations, setRecommendations] = useState([]);
+    const [recommendations, setRecommendations] = useState(null);
     const [loading, setLoading] = useState(false);
     const [history, setHistory] = useState([]);
 

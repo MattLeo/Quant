@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Card, CardContent, Button, FormControl, InputLabel, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
+import { Card, CardContent, Button, FormControl, Select, MenuItem, FormControlLabel, Switch } from '@mui/material';
 import axios from 'axios';
 
 function AnalysisControls({ onRunAnalysis, loading }) {
     const [universeType, setUniverseType] = useState('filtered');
-    const [executeTrades, setExecuteTrades] = useState(false);
+    const [executeTrades, setExecuteTrades] = useState(true);
     const [logs, setLogs] = useState([]);
     const logRef = useRef(null);
     const [autoScroll, setAutoScroll] = useState(true);
@@ -53,7 +53,6 @@ function AnalysisControls({ onRunAnalysis, loading }) {
                 <h3>Run Analysis</h3>
                 
                 <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>Universe Type</InputLabel>
                     <Select
                         value={universeType}
                         onChange={(e) => setUniverseType(e.target.value)}

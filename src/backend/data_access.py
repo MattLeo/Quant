@@ -1,6 +1,7 @@
 from .database import db_manager
 from .models import Position, Trade, AnalysisResult, StopLossUpdate
 from datetime import datetime
+from sqlalchemy import desc
 
 class TradingDAO:
     def __init__(self):
@@ -142,7 +143,7 @@ class TradingDAO:
         """Get records of previous trades"""
         session = self.db.get_session()
         try:
-            trades = session.query(Trade).order_by(Trade.trade_date).all()
+            trades = session.query(Trade).order_by(desc(Trade.trade_date)).all()
             return trades
         finally:
             self.db.close_session(session)
