@@ -83,8 +83,8 @@ advanced_layers = {
 - [ ] Test signal combinations
 
 ### Sprint 3: Risk Management
-- [ ] Add position sizing logic
-- [ ] Implement stop losses
+- [x] Add position sizing logic
+- [x] Implement stop losses
 - [ ] Portfolio-level constraints
 
 ### Sprint 4: Optimization
