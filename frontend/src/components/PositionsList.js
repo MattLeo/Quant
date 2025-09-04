@@ -1,11 +1,11 @@
-import React, { forwardRef } from 'react';
+import React from 'react';
 
-const PositionsList = forwardRef(({ positions }, ref) => {
+function PositionsList ({ positions }) {
     return (
-        <div ref={ref} style={{ padding: '20px' , border: '1px solid #ddd', margin: '10px'}}>
+        <div style={{ padding: '20px' , border: '1px solid #ddd', margin: '10px'}}>
             <h3> Active Positions ({positions?.length || 0})</h3>
             {positions?.length > 0 ? (
-                <div>
+                <div style={{maxHeight: '500px', overflowY: 'auto'}}>
                     {positions.map((position) => (
                         <div key={position.id} style={{ borderBottom: '1px solid #eee', padding: '10px 0' }}>
                             <strong>{position.symbol}</strong> - {position.quantity} shares
@@ -22,7 +22,6 @@ const PositionsList = forwardRef(({ positions }, ref) => {
             )}
         </div>
     );
-});
+}
 
-PositionsList.displayName = 'PositionsList';
 export default PositionsList;
