@@ -70,24 +70,24 @@ advanced_layers = {
 
 ## 🎯 Implementation Roadmap
 
-### Week 1: Core Framework
+### Sprint 1: Core Framework
 - [x] Set up basic signal calculation
 - [x] Implement simple aggregation
 - [x] Test with 5-10 stocks
 - [x] Frontend Dashboard using React
 
-### Week 2: Signal Enhancement
+### Sprint 2: Signal Enhancement
 - [ ] Create Automated Deployment
 - [ ] Add more technical indicators
-- [ ] Implement confidence scoring
+- [x] Implement confidence scoring
 - [ ] Test signal combinations
 
-### Week 3: Risk Management
-- [ ] Add position sizing logic
-- [ ] Implement stop losses
+### Sprint 3: Risk Management
+- [x] Add position sizing logic
+- [x] Implement stop losses
 - [ ] Portfolio-level constraints
 
-### Week 4: Optimization
+### Sprint 4: Optimization
 - [ ] Backtest different weightings
 - [ ] Optimize signal parameters
 - [ ] Add performance tracking
