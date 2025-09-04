@@ -79,7 +79,7 @@ advanced_layers = {
 ### Sprint 2: Signal Enhancement
 - [ ] Create Automated Deployment
 - [ ] Add more technical indicators
-- [ ] Implement confidence scoring
+- [x] Implement confidence scoring
 - [ ] Test signal combinations
 
 ### Sprint 3: Risk Management
