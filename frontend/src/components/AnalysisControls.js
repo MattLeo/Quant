@@ -14,14 +14,14 @@ function AnalysisControls({ onRunAnalysis, loading }) {
         if (loading) {
             interval = setInterval(async () => {
                 try {
-                    const response = await axios.get('http://localhost:8282/api/logs');
+                    const response = await axios.get('/api/logs');
                     setLogs(response.data.logs.split('\n'));
                 } catch (error) {
                     console.error('Error fetching logs:', error);
                 }
             }, 1000);
         } else {
-            axios.post('http://localhost:8282/api/logs/clear')
+            axios.post('/api/logs/clear')
                 .catch(err => console.error('Error clearing logs:', err));
         }
         return () => clearInterval(interval);
