@@ -428,11 +428,12 @@ class BasicTradingAnalysis:
                 
                 time.sleep(0.2)
 
+            '''
             if save_progress and batch_results:
                 self.save_batch_results(batch_results, batch_num, results_folder)
             
             print(f"\n✅ Batch {batch_num} complete: {len(batch_results)} successful, {len(batch_stocks) - len(batch_results)} failed")
-
+            '''
             if batch_end < total_stocks:
                 time.sleep(2)
 
