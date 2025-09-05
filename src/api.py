@@ -14,7 +14,29 @@ from basicAnalysis import BasicTradingAnalysis
 import logging
 
 app = Flask(__name__)
-CORS(app)
+if os.getenv('DOCKER_ENV'):
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": [
+                "http://localhost",
+                "http://localhost:80", 
+                "http://127.0.0.1",
+                "http://127.0.0.1:80",
+                "http://0.0.0.0:80"
+            ],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+            "supports_credentials": True
+        }
+    })
+else:
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": ["http://localhost:3000"],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type"]
+        }
+    })
 
 def load_config():
 
