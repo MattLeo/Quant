@@ -14,13 +14,7 @@ from basicAnalysis import BasicTradingAnalysis
 import logging
 
 app = Flask(__name__)
-CORS(app, resources={
-    r"/api/*": {
-        "origins": ["http://localhost", "http://localhost:3000"],
-        "methods": ["GET", "POST", "PUT", "DELETE"],
-        "allow_headers": ["Content-Type"]
-    }
-})
+CORS(app)
 
 def load_config():
 
