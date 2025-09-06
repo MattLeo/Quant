@@ -1,4 +1,4 @@
-# 🎯 Implementation Architecture
+# Implementation Architecture
 
 ## Phase 1: Foundation (Weeks 1-2) (Phase completed)
 
@@ -44,7 +44,7 @@ advanced_layers = {
 
 ---
 
-## 📊 Data Requirements by Layer
+## Data Requirements by Layer
 
 ### Technical Layer
 - **Minimum**: 6 months daily OHLCV
@@ -68,7 +68,7 @@ advanced_layers = {
 
 ---
 
-## 🎯 Implementation Roadmap
+## Implementation Roadmap
 
 ### Sprint 1: Core Framework
 - [x] Set up basic signal calculation
@@ -99,7 +99,7 @@ advanced_layers = {
 
 ---
 
-## 🔧 Key Design Decisions
+## Key Design Decisions
 
 ### Signal Weighting Strategy
 
@@ -131,7 +131,7 @@ def adjust_weights_by_market_regime(current_signals, market_vol):
 
 ---
 
-## 📈 Expected Performance Benefits
+## Expected Performance Benefits
 
 | Metric | Single Strategy | Layered Approach |
 |--------|----------------|------------------|
