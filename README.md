@@ -77,7 +77,7 @@ advanced_layers = {
 - [x] Frontend Dashboard using React
 
 ### Sprint 2: Signal Enhancement
-- [ ] Create Automated Deployment
+- [x] Create Automated Deployment
 - [ ] Add more technical indicators
 - [x] Implement confidence scoring
 - [ ] Test signal combinations
