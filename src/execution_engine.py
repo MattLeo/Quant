@@ -140,19 +140,19 @@ class ExecutionEngine:
             return {'success': False, 'error': f'Sell order failed: {str(e)}'}
         
     def get_current_positions(self):
-        """Get current positions from local database"""
+        """Get current positions from Alpaca"""
         try:
             positions = self.api.list_positions()
             if len(positions) < 1:
                 return []
             return [{
-                'symbol': pos['symbol'],
-                'quantity': float(pos['quantity']),
-                'market_value': float(pos['entry_price']) * float(pos['quantity']),
-                'cost_basis': float(pos['entry_price']) * float(pos['quantity']),
-                'avg_entry_price': float(pos['entry_price'])
+                'symbol': pos.symbol,
+                'quantity': float(pos.qty),
+                'market_value': float(pos.market_value),
+                'cost_basis': float(pos.cost_basis),
+                'unrealized_pnl': float(pos.unrealized_pl),
+                'avg_entry_price': float(pos.avg_entry_price)
             } for pos in positions]
         except Exception as e:
             print(f"Error fetching positions: {e}")
             return []
-        
