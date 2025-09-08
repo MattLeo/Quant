@@ -147,3 +147,89 @@ class TradingDAO:
             return trades
         finally:
             self.db.close_session(session)
+
+    def sync_positions_with_alapaca(self, alpaca_positions):
+        """Sync local database positions with Alpaca"""
+        session = self.db.get_session()
+        try:
+            print("Starting positions sync with Alpaca...")
+
+            local_positions = session.query(Position).filter(Position.is_active == True).all()
+            local_symbols = set(pos.symbol for pos in local_positions)
+
+            alppaca_symbols = {pos['symbol']: pos for pos in alpaca_positions}
+
+            for symbol, local_pos in local_symbols.items():
+                if symbol not in alppaca_symbols:
+                    print(f"Position {symbol} not found in Alpaca. Closing local position.")
+                    local_pos.is_active = False
+                    
+                    trade = Trade(
+                        position_id = local_pos.id,
+                        symbol = symbol,
+                        action = 'SELL',
+                        quantity = local_pos.quantity,
+                        price = local_pos.entry_price,
+                        reason = 'SYNC_CLOSE'
+                    )
+                    session.add(trade)
+
+            for symbol, alpaca_pos in alppaca_symbols.items():
+                if symbol not in local_symbols:
+                    print(f"Position {symbol} found in Alpaca. Creating local position.")
+                    position = Position(
+                        symbol = symbol,
+                        quantity = int(alpaca_pos['quantity']),
+                        entry_price = alpaca_pos['avg_entry_price'],
+                        entry_date = datetime.now(),
+                        current_stop_loss = None,
+                        is_active = True
+                    )
+                    session.add(position)
+                    session.flush()
+
+                    trade = Trade(
+                        position_id = position.id,
+                        symbol = symbol,
+                        action = 'BUY',
+                        quantity = int(alpaca_pos['quantity']),
+                        price = alpaca_pos['avg_entry_price'],
+                        reason = 'SYNC_ADD'
+                    )
+                    session.add(trade)
+                else:
+                    local_pos = local_symbols[symbol]
+                    alpaca_qty = int(alpaca_pos['quantity'])
+
+                    if local_pos.quantity != alpaca_pos:
+                        print(f"Position {symbol} quantity mismatch for {symbol}: {local_pos.quantity} -> {alpaca_qty}")
+                        qty_diff = alpaca_qty - local_pos.quantity
+                        action = 'BUY' if qty_diff > 0 else 'SELL'
+
+                        trade = Trade(
+                            position_id = local_pos.id,
+                            symbol = symbol,
+                            action = action,
+                            quantity = abs(qty_diff),
+                            price = alpaca_pos['avg_entry_price'],
+                            reason = 'SYNC_UPDATE'
+                        )
+                        session.add(trade)
+                        local_pos.quantity = alpaca_qty
+                        if alpaca_qty == 0:
+                            local_pos.is_active = False
+
+            session.commit()
+            print(f"Positions sync with Alpaca complete. {len(alppaca_symbols)} positions synced.")
+            return {
+                'success': True,
+                'synced_positions': len(alppaca_symbols)
+            }
+        
+        except Exception as e:
+            session.rollback()
+            print(f"Error syncing positons: {e}")
+            return {'success': False, 'error': str(e)}
+        
+        finally:
+            self.db.close_session(session)

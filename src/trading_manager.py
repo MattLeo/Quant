@@ -353,6 +353,27 @@ class TradingManager:
             'total_unrealized_pnl': total_value - total_cost
         }
     
+    def sync_with_alpaca(self):
+        """Sync local database with Alpaca positions"""
+        if not self.execution_engine:
+            print("Execution engine not initialized. Cannot sync with Alpaca.")
+            return {'success': False,'message': 'Execution engine not initialized'}
+        try:
+            alpaca_positions = self.execution_engine.get_current_positions()
+            sync_result = self.dao.sync_positions_with_alapaca(alpaca_positions)
+
+            if sync_result['success']:
+                print("Successfully sycned positions with Alpaca")
+            else:
+                print(f"Failed to sync positions with Alpaca: {sync_result['error']}")
+
+            return sync_result
+        
+        except Exception as e:
+            print(f"Error syncing positions with Alpaca: {e}")
+            return {'success': False, 'error': str(e)}
+        
+    
 
 
         

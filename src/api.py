@@ -171,6 +171,30 @@ def get_trades():
         } for trade in trades])
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/sync-positions', methods=['POST'])
+def sync_positions():
+    """Sync positions with Alpaca"""
+    try:
+        api_key, secret_key, results_folder, universe_type = load_config()
+
+        trading_manager = TradingManager(
+            dao,
+            framework,
+            api_key=api_key,
+            secret_key=secret_key,
+            paper_trading=True,
+            auto_execute=True
+        )
+
+        result = trading_manager.sync_with_alpaca()
+
+        if result['success']:
+            return jsonify({"message": "Position sycned successfully", "details": result})
+        else:
+            return jsonify({"error": "Failed to sync positions", "details": result}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host= '0.0.0.0', debug=False, port=8282)
