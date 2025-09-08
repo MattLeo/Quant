@@ -26,6 +26,15 @@ enhanced_layers = {
     'timeframe': '1 year + intraday for entries',
     'risk': 'Position sizing, correlation limits'
 }
+
+enhanged_signal_weights = {
+    'sma_crossover' = 0.25,
+    'rsi_signal' = 0.20,
+    'macd_signal' = 0.20,
+    'bollinger_signal' = 0.15,
+    'momentum_signal' = 0.10,
+    'volume_signal' = 0.15
+}
 ```
 
 ## Phase 3: Advanced (Months 2-3)
@@ -78,9 +87,14 @@ advanced_layers = {
 
 ### Sprint 2: Signal Enhancement
 - [x] Create Automated Deployment
-- [ ] Add more technical indicators
 - [x] Implement confidence scoring
+- [ ] Add MACD signals
+- [ ] Add Bollinger band singals
+- [ ] Alter momentum calculation and confirmation with new signal information
+- [ ] Add Stochastic Oscillation signal
 - [ ] Test signal combinations
+- [ ] Adjust recommendations to account for new signals
+- [ ] Clean up analysis to prevent trades being recorded while "Execute Trades" is false
 
 ### Sprint 3: Risk Management
 - [x] Add position sizing logic
