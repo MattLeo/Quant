@@ -157,10 +157,10 @@ class TradingDAO:
             local_positions = session.query(Position).filter(Position.is_active == True).all()
             local_symbols = set(pos.symbol for pos in local_positions)
 
-            alppaca_symbols = {pos['symbol']: pos for pos in alpaca_positions}
+            alpaca_symbols = {pos['symbol']: pos for pos in alpaca_positions}
 
             for symbol, local_pos in local_symbols.items():
-                if symbol not in alppaca_symbols:
+                if symbol not in alpaca_symbols:
                     print(f"Position {symbol} not found in Alpaca. Closing local position.")
                     local_pos.is_active = False
                     
@@ -174,7 +174,7 @@ class TradingDAO:
                     )
                     session.add(trade)
 
-            for symbol, alpaca_pos in alppaca_symbols.items():
+            for symbol, alpaca_pos in alpaca_symbols.items():
                 if symbol not in local_symbols:
                     print(f"Position {symbol} found in Alpaca. Creating local position.")
                     position = Position(
@@ -220,10 +220,10 @@ class TradingDAO:
                             local_pos.is_active = False
 
             session.commit()
-            print(f"Positions sync with Alpaca complete. {len(alppaca_symbols)} positions synced.")
+            print(f"Positions sync with Alpaca complete. {len(alpaca_symbols)} positions synced.")
             return {
                 'success': True,
-                'synced_positions': len(alppaca_symbols)
+                'synced_positions': len(alpaca_symbols)
             }
         
         except Exception as e:

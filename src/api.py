@@ -187,7 +187,7 @@ def sync_positions():
             paper_trading=True,
             auto_execute=True
         )
-
+        
         result = trading_manager.sync_with_alpaca()
 
         if result['success']:
