@@ -143,6 +143,8 @@ class ExecutionEngine:
         """Get current positions from local database"""
         try:
             positions = self.api.list_positions()
+            if len(positions) < 1:
+                return []
             return [{
                 'symbol': pos.symbol,
                 'quantity': float(pos.quantity),
