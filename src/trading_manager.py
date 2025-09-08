@@ -1,5 +1,5 @@
 from backend.data_access import TradingDAO
-from backend.models import Position, Trade
+from backend.models import Position, Trade, StopLossUpdate
 from datetime import datetime
 from execution_engine import ExecutionEngine
 
@@ -360,7 +360,7 @@ class TradingManager:
             return {'success': False,'message': 'Execution engine not initialized'}
         try:
             alpaca_positions = self.execution_engine.get_current_positions()
-            sync_result = self.dao.sync_positions_with_alpaca(alpaca_positions)
+            sync_result = self._sync_positions_with_stop_losses(alpaca_positions)
 
             if sync_result['success']:
                 print("Successfully sycned positions with Alpaca")
@@ -372,6 +372,141 @@ class TradingManager:
         except Exception as e:
             print(f"Error syncing positions with Alpaca: {e}")
             return {'success': False, 'error': str(e)}
+        
+    def _sync_positions_with_stop_losses(self, alpaca_positions):
+        """Sync positions with Alpaca API and calculate stop-losses"""
+        session = self.dao.db.get_session()
+        try:
+            local_positions = session.query(Position).filter(Position.is_active == True).all()
+            local_symbols = {pos.symbol: pos for pos in local_positions}
+            alpaca_symbols = {pos['symbol']: pos for pos in alpaca_positions}
+
+            for symbol, local_pos in local_symbols.items():
+                if symbol not in alpaca_symbols:
+                    local_pos.is_active = False
+
+                    trade = Trade(
+                        position_id = local_pos.id,
+                        symbol = symbol,
+                        action = 'SELL',
+                        quantity = local_pos.quantity,
+                        price = local_pos.entry_price,
+                        reason = 'SYNC_CLOSE'
+                    )
+                    session.add(trade)
+
+            for symbol, alpaca_pos in alpaca_symbols.items():
+                if symbol not in local_symbols:
+                    print(f"New position detected: {symbol}")
+
+                    entry_price = alpaca_pos['avg_entry_price']
+                    stop_loss_price = self._calculate_stop_loss_for_sync(symbol, entry_price)
+
+                    position = Position(
+                        symbol = symbol,
+                        quantity = alpaca_pos['quantity'],
+                        entry_price = entry_price,
+                        entry_date = datetime.now(),
+                        current_stop_loss = stop_loss_price,
+                        is_active = True
+                    )
+                    session.add(position)
+                    session.flush()
+
+                    trade = Trade(
+                        position_id = position.id,
+                        symbol = symbol,
+                        action = 'BUY',
+                        quantity = alpaca_pos['quantity'],
+                        price = entry_price,
+                        reason = 'SYNC_ADD'
+                    )
+                    session.add(trade)
+
+                    if stop_loss_price:
+                        stop_update = StopLossUpdate(
+                            position_id = position.id,
+                            old_stop_loss = None,
+                            new_stop_loss = stop_loss_price,
+                            update_date = datetime.now(),
+                            reason = 'INITIAL',
+                            current_price = entry_price
+                        )
+                        session.add(stop_update)
+                    
+                    else:
+                        local_pos = local_symbols[symbol]
+                        alpaca_qty = alpaca_pos['quantity']
+
+                        if local_pos.quantity != alpaca_qty:
+                            print(f"Position {symbol} quantity mismatch for {symbol}: {local_pos.quantity} -> {alpaca_qty}")
+                            qty_diff = alpaca_qty - local_pos.quantity
+                            action = 'BUY' if qty_diff > 0 else 'SELL'
+
+                            trade = Trade(
+                                position_id = local_pos.id,
+                                symbol = symbol,
+                                action = action,
+                                quantity = abs(qty_diff),
+                                price = alpaca_pos['avg_entry_price'],
+                                reason = 'SYNC_UPDATE'
+                            )
+                            session.add(trade)
+                            local_pos.quantity = alpaca_qty
+                            if alpaca_qty == 0:
+                                local_pos.is_active = False
+
+                        if local_pos.current_stop_loss is None:
+                            print(f"Setting missing stop loss for {symbol}")
+                            stop_loss_price = self._calculate_stop_loss_for_sync(symbol, local_pos.entry_price)
+                            if stop_loss_price:
+                                local_pos.current_stop_loss = stop_loss_price
+
+                                stop_update = StopLossUpdate(
+                                    position_id = local_pos.id,
+                                    old_stop_loss = None,
+                                    new_stop_loss = stop_loss_price,
+                                    update_date = datetime.now(),
+                                    reason = 'SYNC_SET',
+                                    current_price = local_pos.entry_price
+                                )
+                                session.add(stop_update)
+            session.commit()
+            print(f"Positions sync with Alpaca complete. {len(alpaca_symbols)} positions synced.")
+            return {
+                'success': True,
+                'synced_positions': len(alpaca_symbols)
+            }
+        
+        except Exception as e:
+            session.rollback()
+            print(f"Error syncing positons: {e}")
+            return {'success': False, 'error': str(e)}
+        
+        finally:
+            self.dao.db.close_session(session)
+
+    def _calculate_stop_loss_for_sync(self, symbol, entry_price):
+        """Calculate stop loss for a position during sync"""
+        try:
+            data = self.framework.get_stock_data(symbol, days=90)
+            if data is not None and len(data) >= 30:
+                returns = data['close']. pct_change().dropna()
+                volatility = returns.std() * (252**0.5)
+                stop_loss_price = self._calculate_stop_loss(entry_price, volatility)
+                print(f"Caluclated stop loss for {symbol}: {stop_loss_price:.2f}")
+                return stop_loss_price
+            else:
+                stop_loss_price = entry_price * 0.92
+                print(f"Using default stop loss for {symbol}: {stop_loss_price:.2f}")
+                return stop_loss_price
+            
+        except Exception as e:
+            print(f"Error calculating stop loss for {symbol}: {e}")
+            print(f"Using default stop loss for {symbol}: {stop_loss_price:.2f}")
+            stop_loss_price = entry_price * 0.92
+            return stop_loss_price
+
         
     
 
