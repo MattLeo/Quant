@@ -96,6 +96,7 @@ advanced_layers = {
 - [ ] Adjust recommendations to account for new signals
 - [ ] Clean up analysis to prevent trades being recorded while "Execute Trades" is false
 - [ ] Improve trade API logic to add placeholders for cases when trade orders are made outside of market hours
+- [ ] Add frontend tweaks to show previous recommendaton if current day matches
 
 ### Sprint 3: Risk Management
 - [x] Add position sizing logic
@@ -104,6 +105,9 @@ advanced_layers = {
 - [ ] Add in Fundamental layer calculations
 - [ ] Update recommendations based on combined Technical & Fundamental weights
 - [ ] Create wealth capturing regime to find optimal position sell timing
+- [ ] Implement automatic analysis schedule
+- [ ] Add configuration screen to allow for users to modify schedule, API keys, etc.
+- [ ] Create Update workflow for already deployed instances
 
 ### Sprint 4: Optimization
 - [ ] Backtest different weightings
