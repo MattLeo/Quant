@@ -199,7 +199,7 @@ class TradingDAO:
                     session.add(trade)
                 else:
                     local_pos = local_symbols[symbol]
-                    alpaca_qty = int(alpaca_pos['quantity'])
+                    alpaca_qty = alpaca_pos['quantity']
 
                     if local_pos.quantity != alpaca_qty:
                         print(f"Position {symbol} quantity mismatch for {symbol}: {local_pos.quantity} -> {alpaca_qty}")
