@@ -155,7 +155,7 @@ class TradingDAO:
             print("Starting positions sync with Alpaca...")
 
             local_positions = session.query(Position).filter(Position.is_active == True).all()
-            local_symbols = {pos.symbol for pos in local_positions}
+            local_symbols = {pos.symbol: pos for pos in local_positions}
 
             alpaca_symbols = {pos['symbol']: pos for pos in alpaca_positions}
 
