@@ -148,7 +148,7 @@ class TradingDAO:
         finally:
             self.db.close_session(session)
 
-    def sync_positions_with_alapaca(self, alpaca_positions):
+    def sync_positions_with_alpaca(self, alpaca_positions):
         """Sync local database positions with Alpaca"""
         session = self.db.get_session()
         try:
@@ -201,7 +201,7 @@ class TradingDAO:
                     local_pos = local_symbols[symbol]
                     alpaca_qty = int(alpaca_pos['quantity'])
 
-                    if local_pos.quantity != alpaca_pos:
+                    if local_pos.quantity != alpaca_qty:
                         print(f"Position {symbol} quantity mismatch for {symbol}: {local_pos.quantity} -> {alpaca_qty}")
                         qty_diff = alpaca_qty - local_pos.quantity
                         action = 'BUY' if qty_diff > 0 else 'SELL'
