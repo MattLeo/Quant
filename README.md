@@ -95,18 +95,22 @@ advanced_layers = {
 - [ ] Test signal combinations
 - [ ] Adjust recommendations to account for new signals
 - [ ] Clean up analysis to prevent trades being recorded while "Execute Trades" is false
+- [ ] Improve trade API logic to add placeholders for cases when trade orders are made outside of market hours
 
 ### Sprint 3: Risk Management
 - [x] Add position sizing logic
 - [x] Implement stop losses
 - [ ] Portfolio-level constraints
+- [ ] Add in Fundamental layer calculations
+- [ ] Update recommendations based on combined Technical & Fundamental weights
+- [ ] Create wealth capturing regime to find optimal position sell timing
 
 ### Sprint 4: Optimization
 - [ ] Backtest different weightings
 - [ ] Optimize signal parameters
 - [ ] Add performance tracking
 
-### Month 2+: Advanced Features
+### Unscheduled: Advanced Features
 - [ ] Machine learning signal generation
 - [ ] Alternative data integration
 - [ ] Real-time execution system
