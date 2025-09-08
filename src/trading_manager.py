@@ -360,7 +360,7 @@ class TradingManager:
             return {'success': False,'message': 'Execution engine not initialized'}
         try:
             alpaca_positions = self.execution_engine.get_current_positions()
-            sync_result = self.dao.sync_positions_with_alpaca(alpaca_positions)
+            sync_result = self.dao.sync_with_alpaca(alpaca_positions)
 
             if sync_result['success']:
                 print("Successfully sycned positions with Alpaca")
