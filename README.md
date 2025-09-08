@@ -27,7 +27,7 @@ enhanced_layers = {
     'risk': 'Position sizing, correlation limits'
 }
 
-enhanged_signal_weights = {
+enhanced_technical_signal_weights = {
     'sma_crossover' = 0.25,
     'rsi_signal' = 0.20,
     'macd_signal' = 0.20,
