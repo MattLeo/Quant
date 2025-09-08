@@ -146,11 +146,11 @@ class ExecutionEngine:
             if len(positions) < 1:
                 return []
             return [{
-                'symbol': pos.symbol,
-                'quantity': float(pos.quantity),
-                'market_value': float(pos.entry_price * pos.quantity),
-                'cost_basis': float(pos.entry_price * pos.quantity),
-                'avg_entry_price': float(pos.entry_price)
+                'symbol': pos['symbol'],
+                'quantity': float(pos['quantity']),
+                'market_value': float(pos['entry_price']) * float(pos['quantity']),
+                'cost_basis': float(pos['entry_price']) * float(pos['quantity']),
+                'avg_entry_price': float(pos['entry_price'])
             } for pos in positions]
         except Exception as e:
             print(f"Error fetching positions: {e}")
