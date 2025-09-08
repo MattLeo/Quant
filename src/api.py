@@ -86,6 +86,7 @@ trading_manager = TradingManager(
     paper_trading=True,
     auto_execute=True
 )
+trading_manager.sync_with_alpaca()
 
 @app.before_request
 def log_request():

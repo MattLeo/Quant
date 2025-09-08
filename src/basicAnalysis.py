@@ -372,6 +372,7 @@ class BasicTradingAnalysis:
     
     def run_analysis(self, universe_type='starter', max_stocks=None, batch_size=50, save_progress=True, results_folder = 'analysis_results'):
         """Run analysis on all stocks"""
+        
         print("🚀 Starting Basic Analysis Stocks")
         print("=" * 50)
 
