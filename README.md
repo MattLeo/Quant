@@ -89,8 +89,7 @@ advanced_layers = {
 - [x] Create Automated Deployment
 - [x] Implement confidence scoring
 - [x] Add MACD signals
-- [ ] Add Bollinger band singals
-- [ ] Alter momentum calculation and confirmation with new signal information
+- [x] Add Bollinger band signals
 - [ ] Add Stochastic Oscillation signal
 - [ ] Adjust recommendations to account for new signals
 - [ ] Clean up analysis to prevent trades being recorded while "Execute Trades" is false

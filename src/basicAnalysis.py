@@ -23,7 +23,9 @@ class TradingAnalysis:
             'sma_crossover': 0.25,
             'rsi_signal': 0.2,
             'volume_signal': 0.15,
-            'macd_signal': 0.2
+            'macd_signal': 0.2,
+            'bollinger_signal': 0.15,
+            #TODO add momentum signal
         }
 
         # Buy/Sell Thresholds
@@ -320,6 +322,7 @@ class TradingAnalysis:
         rsi_signal, rsi_confidence = self.calculate_rsi(data)
         vol_signal, vol_confidence = self.calculate_volume(data)
         macd_signal, macd_confidence = self.calculate_macd(data)
+        bollinger_signal, bollinger_confidence = self.calculate_bollinger_bands(data)
 
         risk_metrics = self.calculate_risk_metrics(data)
 
@@ -327,14 +330,16 @@ class TradingAnalysis:
             sma_signal * sma_confidence * self.signal_weights['sma_crossover'] +
             rsi_signal * rsi_confidence * self.signal_weights['rsi_signal'] +
             vol_signal * vol_confidence * self.signal_weights['volume_signal'] +
-            macd_signal * macd_confidence * self.signal_weights['macd_signal']
+            macd_signal * macd_confidence * self.signal_weights['macd_signal'] +
+            bollinger_signal * bollinger_confidence * self.signal_weights['bollinger_signal']
         )
 
         total_confidence = (
             sma_confidence * self.signal_weights['sma_crossover'] +
             rsi_confidence * self.signal_weights['rsi_signal'] +
             vol_confidence * self.signal_weights['volume_signal'] +
-            macd_confidence * self.signal_weights['macd_signal']
+            macd_confidence * self.signal_weights['macd_signal'] +
+            bollinger_confidence * self.signal_weights['bollinger_signal']
         )
 
         # Risk adjustment
@@ -362,6 +367,7 @@ class TradingAnalysis:
                 'sma': {'value': sma_signal, 'confidence': sma_confidence},
                 'rsi': {'value': rsi_signal, 'confidence': rsi_confidence},
                 'macd': {'value': macd_signal, 'confidence': macd_confidence},
+                'bollinger': {'value': bollinger_signal, 'confidence': bollinger_confidence},
                 'volume': {'value': vol_signal, 'confidence': vol_confidence}
             },
             'risk_metrics': risk_metrics
@@ -549,6 +555,99 @@ class TradingAnalysis:
         except Exception as e:
             print(f"Error in MACD calculation: {e}")
             return 0, 0
+
+    def calculate_bollinger_bands(self, data, period=20, std_dev=2):
+        """Calculate Bollinger Bands trading signals"""
+
+        if len(data) < period + 5:
+            return 0, 0
+        
+        try:
+            # Calculating bands
+            sma = data['close'].rolling(window=period).mean()
+            std = data['close'].rolling(window=period).std()
+            upper_band = sma + (std * std_dev)
+            lower_band = sma - (std * std_dev)
+
+            # Current values
+            current_price = data['close'].iloc[-1]
+            current_sma = sma.iloc[-1]
+            current_upper = upper_band.iloc[-1]
+            current_lower = lower_band.iloc[-1]
+            current_std = std.iloc[-1]
+
+            # Previous values
+            previous_price = data['close'].iloc[-2] if len(data) > 1 else current_price
+            previous_upper = upper_band.iloc[-2] if len(upper_band) > 1 else current_upper
+            previous_lower = lower_band.iloc[-2] if len(lower_band) > 1 else current_lower
+
+            if pd.isna(current_sma) or pd.isna(current_upper) or pd.isna(current_lower):
+                return 0, 0
+        
+            band_width = (current_upper - current_lower) / current_sma
+            if current_upper != current_lower:
+                band_position = (current_price - current_lower) / current_sma
+            else:
+                band_position = 0.5
+
+            signal = 0
+            confidence = 0
+
+            # Band touching / breaching
+            if current_price <= current_lower :
+                if previous_price > previous_lower :
+                    signal = 0.8
+                    confidence = 0.9
+                else:
+                    signal = 0.6
+                    confidence = 0.7
+            elif current_price >= current_upper :
+                if previous_price < previous_upper :
+                    signal = -0.8
+                    confidence = 0.9
+                else:
+                    signal = -0.6
+                    confidence = 0.7
+            # Mean reverse
+            elif band_position < 0.2 :
+                signal = 0.4
+                confidence = 0.6
+            elif band_position > 0.8 :
+                signal = -0.4
+                confidence = 0.6
+            # Middle band crossover
+            elif current_price > current_sma and previous_price <= current_sma:
+                signal = 0.3
+                confidence = 0.5
+            elif current_price < current_sma and previous_price >= current_sma:
+                signal = -0.3
+                confidence = 0.5
+            # Band squeeze
+            if band_width < 0.1 :
+                if current_price > previous_price:
+                    signal += 0.2
+                    confidence = min(1.0, confidence + 0.1)
+                if current_price < previous_price:
+                    signal -= 0.2
+                    confidence = min(1.0, confidence + 0.1)
+
+            volatility_adjustment = min(1.0, band_width * 5)
+            if abs(signal) < 0.5 :
+                confidence *= (1 - volatility_adjustment * 0.3)
+            
+            # Clamping signal and confidence to signal bounds
+            signal = max( -1.0, min(1.0, signal))
+            confidence = max(0.0, min(1.0, confidence))
+
+            return signal, confidence
+        
+        except Exception as e:
+            print(f"Error in Bollinger Bands calculation: {e}")
+            return 0, 0
+            
+                
+
+
         
 
 
