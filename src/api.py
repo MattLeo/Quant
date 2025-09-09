@@ -11,7 +11,7 @@ from datetime import datetime
 from backend.data_access import TradingDAO
 from backend.init_db import init_database
 from trading_manager import TradingManager
-from basicAnalysis import BasicTradingAnalysis
+from basicAnalysis import TradingAnalysis
 import logging
 
 app = Flask(__name__)
@@ -78,7 +78,7 @@ init_database()
 logger = init_logger()
 dao = TradingDAO()
 api_key, secret_key, results_folder, universe_type = load_config()
-framework = BasicTradingAnalysis(api_key, secret_key)
+framework = TradingAnalysis(api_key, secret_key)
 trading_manager = TradingManager(
     dao,
     framework,

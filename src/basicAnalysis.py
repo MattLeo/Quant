@@ -8,8 +8,8 @@ import logging
 
 logger = logging.getLogger("console_log")
 
-class BasicTradingAnalysis:
-    """Trading analysis for a select number of stocks to track performance"""
+class TradingAnalysis:
+    """Trading analysis of stocks to track performance"""
 
     def __init__(self, api_key, secret_key):
         self.api = tradeapi.REST(
@@ -20,9 +20,10 @@ class BasicTradingAnalysis:
 
         # Initial signal weights
         self.signal_weights = {
-            'sma_crossover': 0.4,
-            'rsi_signal': 0.35,
-            'volume_signal': 0.25
+            'sma_crossover': 0.25,
+            'rsi_signal': 0.2,
+            'volume_signal': 0.15,
+            'macd_signal': 0.2
         }
 
         # Buy/Sell Thresholds
@@ -318,19 +319,22 @@ class BasicTradingAnalysis:
         sma_signal, sma_confidence = self.calculate_sma(data)
         rsi_signal, rsi_confidence = self.calculate_rsi(data)
         vol_signal, vol_confidence = self.calculate_volume(data)
+        macd_signal, macd_confidence = self.calculate_macd(data)
 
         risk_metrics = self.calculate_risk_metrics(data)
 
         total_signal = (
             sma_signal * sma_confidence * self.signal_weights['sma_crossover'] +
             rsi_signal * rsi_confidence * self.signal_weights['rsi_signal'] +
-            vol_signal * vol_confidence * self.signal_weights['volume_signal']
+            vol_signal * vol_confidence * self.signal_weights['volume_signal'] +
+            macd_signal * macd_confidence * self.signal_weights['macd_signal']
         )
 
         total_confidence = (
             sma_confidence * self.signal_weights['sma_crossover'] +
             rsi_confidence * self.signal_weights['rsi_signal'] +
-            vol_confidence * self.signal_weights['volume_signal']
+            vol_confidence * self.signal_weights['volume_signal'] +
+            macd_confidence * self.signal_weights['macd_signal']
         )
 
         # Risk adjustment
@@ -357,6 +361,7 @@ class BasicTradingAnalysis:
             'signals': {
                 'sma': {'value': sma_signal, 'confidence': sma_confidence},
                 'rsi': {'value': rsi_signal, 'confidence': rsi_confidence},
+                'macd': {'value': macd_signal, 'confidence': macd_confidence},
                 'volume': {'value': vol_signal, 'confidence': vol_confidence}
             },
             'risk_metrics': risk_metrics
@@ -439,28 +444,6 @@ class BasicTradingAnalysis:
         results.sort(key=lambda x: x['adjusted_signal'], reverse=True)
         
         return results
-    
-    def save_batch_results(self, batch_results, batch_num, results_folder):
-        """Save intermediate batch results"""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        project_root = os.path.dirname(os.path.dirname(__file__))
-        results_folder = f"{project_root}/{results_folder}/batches"
-        filename = os.path.join(results_folder, f"batch_{batch_num}_{timestamp}.csv")
-
-        df_data = []
-        for result in batch_results:
-            df_data.append({
-                'symbol': result['symbol'],
-                'price': result['current_price'],
-                'signal': result['adjusted_signal'],
-                'confidence': result['confidence'],
-                'recommendation': result['recommendation'],
-                'risk_score': result['risk_metrics']['risk_score'],
-                'volatility': result['risk_metrics']['volatility']
-            })
-        df =  pd.DataFrame(df_data)
-        df.to_csv(filename, index=False)
-        print(f"   💾 Batch saved to {filename}")
 
     def generate_recommendations(self, results):
         """Generate recommendations based on analysis results"""
@@ -495,11 +478,78 @@ class BasicTradingAnalysis:
             print(f"   Average Signal: {avg_signal:.3f}")
             print(f"   Average Confidence: {avg_confidence:.2f}")
             print(f"   Buy Ratio: {len(buy_recommendations) / len(results) * 100:.1f}%")
-            
+
         return {
             'buy_list': buy_recommendations,
             'sell_list': sell_recommendations,
             'hold_list': hold_recommendations,
             'total_analyzed': len(results)
         }
+    def calculate_macd(self, data):
+        """Calculate MACD (Moving Average Convergence/Divergence)"""
+        if len(data) < 35:
+            return 0, 0
+        
+        try:
+            ema_12 = data['close'].ewm(span=12).mean()
+            ema_26 = data['close'].ewm(span=26).mean()
+
+            macd_line = ema_12 - ema_26
+            signal_line = macd_line.ewm(span=9).mean()
+            histogram = macd_line - signal_line
+
+            # Current values
+            current_macd = macd_line.iloc[-1]
+            current_signal = signal_line.iloc[-1]
+            current_histogram = histogram.iloc[-1]
+            previous_histogram = histogram.iloc[-2] if len(histogram) > 1 else 0
+
+            if pd.isna(current_macd) or pd.isna(current_signal) or pd.isna(current_histogram):
+                return 0, 0
+            
+            signal = 0
+            confidence = 0
+
+            # Generate signal values based on MACD behavior
+            if current_macd > current_signal:
+                if current_histogram > previous_histogram:
+                    signal = 0.7
+                    confidence = 0.6
+                else:
+                    signal = 0.3
+                    confidence = 0.6
+            elif current_macd < current_signal:
+                if current_histogram < previous_histogram:
+                    signal = -0.7
+                    confidence = 0.8
+                else:
+                    signal = -0.3
+                    confidence = 0.6
+
+            # MACD crossover signals
+            if (current_macd > current_signal and
+                macd_line.iloc[-2] <= signal_line.iloc[-2]):
+                signal = 0.9
+                confidence = 0.9
+            elif (current_macd < current_signal and
+                  macd_line.iloc[-2] >= signal_line.iloc[-2]):
+                signal = -0.9
+                confidence = 0.9
+
+            # Zero line crossover signals
+            if (current_macd > 0 and macd_line.iloc[-2] <= 0):
+                signal = min(0.8, signal + 0.2)
+                confidence = min(1.0, confidence + 0.1)
+            elif (current_macd < 0 and macd_line.iloc[-2] >= 0):
+                signal = max(-0.8, signal - 0.2)
+                confidence = min(1.0, confidence + 0.1)
+
+            return signal, confidence
+        
+        except Exception as e:
+            print(f"Error in MACD calculation: {e}")
+            return 0, 0
+        
+
+
     
