@@ -6,7 +6,7 @@ import AnalysisControls from './AnalysisControls';
 import RecommendationsList from './RecommendationsList'
 import TradeHistory from './TradeHistory';
 
-const API_BASE = '/api';
+const API_BASE = 'http://localhost:8282/api';
 
 function Dashboard() {
     const [portfolio, setPortfolio] = useState(null);
@@ -19,6 +19,7 @@ function Dashboard() {
         fetchPortfolio();
         fetchPositions();
         fetchHistory();
+        fetchRecommendations();
     }, []);
 
     const fetchPortfolio = async () => {
@@ -65,6 +66,15 @@ function Dashboard() {
             setHistory(response.data);
         } catch (error) {
             console.error('Error fetching trade history:', error);
+        }
+    };
+    
+    const fetchRecommendations = async () => {
+        try {
+            const response = await axios.get(`${API_BASE}/analysis/results`);
+            setRecommendations(response.data.recommendations);
+        } catch (error) {
+            console.error('Error fetching recommendations:', error);
         }
     };
 

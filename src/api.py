@@ -6,6 +6,7 @@ import traceback
 import logging
 from logging.handlers import MemoryHandler
 from io import StringIO
+from datetime import datetime
 
 from backend.data_access import TradingDAO
 from backend.init_db import init_database
@@ -116,6 +117,29 @@ def run_analysis():
     except Exception as e:
         print(f"ERROR in /api/analysis/run: {str(e)}")
         traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/analysis/results', methods=['GET'])
+def get_analysis_results():
+    """Get analysis results if date matches today"""
+    today = datetime.now().date()
+    try:
+        results = dao.get_analysis_results()
+
+        if results and results.analysis_date.date() == today:
+            return jsonify({
+                'id': results.id,
+                'analysis_date': results.analysis_date,
+                'recommendations': {
+                    'hold_list': json.loads(results.hold_recommendations),
+                    'buy_list': json.loads(results.buy_recommendations),
+                    'sell_list': json.loads(results.sell_recommendations)
+                }
+            })
+        else:
+            return {}
+        
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
     
 @app.route('/api/positions', methods=['GET'])

@@ -89,6 +89,7 @@ class TradingManager:
         """Phase 2: Find new investement opportunities"""
         results = self.framework.run_analysis(universe_type = universe_type)
         recommendations = self.framework.generate_recommendations(results)
+        self.dao.save_recommendations_snapshot(recommendations['buy_list'], recommendations['sell_list'], recommendations['hold_list'])
 
         owned_symbols = self.dao.get_owned_symbols()
         original_buy_count = len(recommendations['buy_list'])

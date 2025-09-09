@@ -1,7 +1,8 @@
 from .database import db_manager
-from .models import Position, Trade, AnalysisResult, StopLossUpdate
+from .models import Position, Trade, AnalysisResult, StopLossUpdate, RecommendationsSnapshot
 from datetime import datetime
 from sqlalchemy import desc
+import json
 
 class TradingDAO:
     def __init__(self):
@@ -231,5 +232,32 @@ class TradingDAO:
             print(f"Error syncing positons: {e}")
             return {'success': False, 'error': str(e)}
         
+        finally:
+            self.db.close_session(session)
+
+    def get_analysis_results(self):
+        """Get most recent analysis results from the database"""
+        session = self.db.get_session()
+        try:
+            results = session.query(RecommendationsSnapshot).order_by(desc(RecommendationsSnapshot.analysis_date)).first()
+            return results
+        finally:
+            self.db.close_session(session)
+
+    def save_recommendations_snapshot(self, buy_recs, sell_recs, hold_recs):
+        """Save buy/sell/hold recommendations"""
+        session = self.db.get_session()
+        try:
+            snapshot = RecommendationsSnapshot(
+                buy_recommendations = json.dumps(buy_recs),
+                sell_recommendations = json.dumps(sell_recs),
+                hold_recommendations = json.dumps(hold_recs),
+            )
+            session.add(snapshot)
+            session.commit()
+        except Exception as e:
+            session.rollback()
+            print(f"Error saving recommendations snapshot: {e}")
+            raise e
         finally:
             self.db.close_session(session)

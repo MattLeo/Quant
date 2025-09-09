@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -68,5 +68,17 @@ class StopLossUpdate(Base):
 
     # Relationships
     position = relationship("Position", back_populates="stop_updates")
+
+class RecommendationsSnapshot(Base):
+    __tablename__= 'recommendations_snapshots'
+    
+    id = Column(Integer, primary_key=True)
+    analysis_date = Column(DateTime, default=datetime.now(), nullable=False)
+    buy_recommendations = Column(Text)
+    sell_recommendations = Column(Text)
+    hold_recommendations = Column(Text)
+
+
+
 
 

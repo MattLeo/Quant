@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger("console_log")
 
 class BasicTradingAnalysis:
-    """Simple trading analysis for a select number of stocks to track performance"""
+    """Trading analysis for a select number of stocks to track performance"""
 
     def __init__(self, api_key, secret_key):
         self.api = tradeapi.REST(
@@ -241,7 +241,7 @@ class BasicTradingAnalysis:
         return signal, confidence
     
     def calculate_volume(self, data):
-        """Volume Analysis - Fixed version"""
+        """Volume Analysis"""
         if len(data) < 20:
             return 0, 0
 
@@ -361,13 +361,6 @@ class BasicTradingAnalysis:
             },
             'risk_metrics': risk_metrics
         }
-
-        """ # Hiding this as it is no longer necessary to display this in the log
-        print(f"    📈 Price: ${current_price:.2f}")
-        print(f"    📊 Signal: {adjusted_signal:.3f} (Confidence: {total_confidence:.2f})")
-        print(f"    🎯 Recommendation: {recommendation}")
-        print(f"    ⚠️ Risk Score: {risk_metrics['risk_score']:.2f}")
-        """
         return result
     
     def run_analysis(self, universe_type='starter', max_stocks=None, batch_size=50, save_progress=True, results_folder = 'analysis_results'):
@@ -429,12 +422,6 @@ class BasicTradingAnalysis:
                 
                 time.sleep(0.2)
 
-            '''
-            if save_progress and batch_results:
-                self.save_batch_results(batch_results, batch_num, results_folder)
-            
-            print(f"\n✅ Batch {batch_num} complete: {len(batch_results)} successful, {len(batch_stocks) - len(batch_results)} failed")
-            '''
             if batch_end < total_stocks:
                 time.sleep(2)
 
@@ -508,7 +495,7 @@ class BasicTradingAnalysis:
             print(f"   Average Signal: {avg_signal:.3f}")
             print(f"   Average Confidence: {avg_confidence:.2f}")
             print(f"   Buy Ratio: {len(buy_recommendations) / len(results) * 100:.1f}%")
-        
+            
         return {
             'buy_list': buy_recommendations,
             'sell_list': sell_recommendations,
