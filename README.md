@@ -88,15 +88,15 @@ advanced_layers = {
 ### Sprint 2: Signal Enhancement
 - [x] Create Automated Deployment
 - [x] Implement confidence scoring
-- [ ] Add MACD signals
+- [x] Add MACD signals
 - [ ] Add Bollinger band singals
 - [ ] Alter momentum calculation and confirmation with new signal information
 - [ ] Add Stochastic Oscillation signal
-- [ ] Test signal combinations
 - [ ] Adjust recommendations to account for new signals
 - [ ] Clean up analysis to prevent trades being recorded while "Execute Trades" is false
 - [ ] Improve trade API logic to add placeholders for cases when trade orders are made outside of market hours
-- [ ] Add frontend tweaks to show previous recommendaton if current day matches
+- [x] Add frontend tweaks to show previous recommendaton if current day matches
+- [ ] Test signal combinations (2 weeks)
 
 ### Sprint 3: Risk Management
 - [x] Add position sizing logic
@@ -104,10 +104,12 @@ advanced_layers = {
 - [ ] Portfolio-level constraints
 - [ ] Add in Fundamental layer calculations
 - [ ] Update recommendations based on combined Technical & Fundamental weights
-- [ ] Create wealth capturing regime to find optimal position sell timing
+- [ ] Create growth capturing regime to find optimal position sell timing
 - [ ] Implement automatic analysis schedule
 - [ ] Add configuration screen to allow for users to modify schedule, API keys, etc.
 - [ ] Create Update workflow for already deployed instances
+- [ ] Add frontend improvments (growth stats, historygram, single stock detail window)
+- [ ] Improve the analysis running screen on frontend look better and give more runtime details
 
 ### Sprint 4: Optimization
 - [ ] Backtest different weightings

@@ -127,14 +127,23 @@ def get_analysis_results():
         results = dao.get_analysis_results()
 
         if results and results.analysis_date.date() == today:
+            recommendations = {
+                'hold_list': json.loads(results.hold_recommendations),
+                'buy_list': json.loads(results.buy_recommendations),
+                'sell_list': json.loads(results.sell_recommendations)
+            }
+
+            owned_symbols = dao.get_owned_symbols()
+            if owned_symbols:
+                recommendations['buy_list'] = [
+                    rec for rec in recommendations['buy_list'] 
+                    if rec['symbol'] not in owned_symbols
+                ]
+
             return jsonify({
                 'id': results.id,
                 'analysis_date': results.analysis_date,
-                'recommendations': {
-                    'hold_list': json.loads(results.hold_recommendations),
-                    'buy_list': json.loads(results.buy_recommendations),
-                    'sell_list': json.loads(results.sell_recommendations)
-                }
+                'recommendations': recommendations
             })
         else:
             return {}
