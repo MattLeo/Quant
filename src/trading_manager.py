@@ -17,7 +17,7 @@ class TradingManager:
     def run_full_analysis(self, universe_type, execute_trades=False):
         """Run completed two-phase analysis with optional trade execution"""
         print("=== PHASE 1: POSITION MANAGEMENT ===")
-        phase1_results = self._manage_existing_positions()
+        phase1_results = self._manage_existing_positions(execute_trades)
 
         executed_sells = []
         failed_sells = []
@@ -268,7 +268,7 @@ class TradingManager:
     
     def execute_buy_recommendations(self, buy_recommendations, execute_trades=False):
         """Execute buy recommendations via Alpaca API"""
-        if not self.execution_engine or not self.auto_execute:
+        if not self.execution_engine or not execute_trades:
             print("Auto-execution disabeld. Buy recommendations available for manual review.")
             return [], []
         

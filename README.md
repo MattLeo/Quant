@@ -92,7 +92,7 @@ advanced_layers = {
 - [x] Add Bollinger band signals
 - [x] Add Stochastic Oscillation signal
 - [x] Adjust recommendations to account for new signals
-- [ ] Clean up analysis to prevent trades being recorded while "Execute Trades" is false
+- [x] Clean up analysis to prevent trades being recorded while "Execute Trades" is false
 - [ ] Improve trade API logic to add placeholders for cases when trade orders are made outside of market hours
 - [x] Add frontend tweaks to show previous recommendaton if current day matches
 - [ ] Test signal combinations (2 weeks)
