@@ -97,7 +97,8 @@ class ExecutionEngine:
                 'estimated_value': actual_position_value,
                 'status': updated_order.status,
                 'filled_qty': float(updated_order.filled_qty or 0),
-                'filled_avg_price': float(updated_order.filled_avg_price or 0)
+                'filled_avg_price': float(updated_order.filled_avg_price or 0),
+                'is_pending': updated_order.status != 'filled'
             }
         except Exception as e:
             return {'success': False, 'error': f'Order execution failed:  {str(e)}'}
@@ -156,3 +157,17 @@ class ExecutionEngine:
         except Exception as e:
             print(f"Error fetching positions: {e}")
             return []
+
+    def check_order_status(self, order_id):
+        """check if order is filled"""
+        try:
+            order = self.api.get_order(order_id)
+            return {
+                'success': True,
+                'order_id': order_id,
+                'status': order.status,
+                'filled_avg_price': float(order.filled_avg_price or 0) if order.filled_avg_price else None,
+                'is_filled': order.status != 'filled'
+            }
+        except Exception as e:
+            return {'success': False, 'error':  {str(e)}}

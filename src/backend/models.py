@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boo
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
+import string
 
 Base = declarative_base()
 
@@ -15,6 +16,8 @@ class Position(Base):
     entry_date = Column(DateTime, nullable=False)
     current_stop_loss = Column(Float, nullable=True)
     is_active = Column(Boolean, default=True)
+    status = Column(String(20), default='filled') # 'filled' or 'pending'
+    order_id = Column(String(50), nullable=True)
 
     # Relationships
     trades = relationship("Trade", back_populates="position")
@@ -29,6 +32,7 @@ class Trade(Base):
     action = Column(String(4), nullable=False)  # BUY or SELL
     quantity = Column(Float, nullable=False)
     price = Column(Float, nullable=False)
+
     trade_date = Column(DateTime, default=datetime.utcnow)
     reason = Column(String(255), nullable=True) #'NEW_POSITION, 'STOP_LOSS', 'SIGNAL_CHANGE'
 
@@ -77,6 +81,7 @@ class RecommendationsSnapshot(Base):
     buy_recommendations = Column(Text)
     sell_recommendations = Column(Text)
     hold_recommendations = Column(Text)
+
 
 
 

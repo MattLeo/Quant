@@ -46,7 +46,7 @@ class TradingDAO:
             print(f"Error getting active positions: {e}")
             raise e
         
-    def create_position(self, symbol, quantity, entry_price, entry_date=datetime.now(), stop_loss_price=None):
+    def create_position(self, symbol, quantity, entry_price, order_id, status='filled', entry_date=datetime.now(), stop_loss_price=None):
         """Create a new position"""
         session = self.db.get_session()
         try:
@@ -56,9 +56,12 @@ class TradingDAO:
                 entry_price = entry_price,
                 entry_date = entry_date,
                 current_stop_loss = stop_loss_price,
-                is_active = True
+                is_active = True,
+                status = status,
+                order_id = order_id
             )
             session.add(position)
+            session.flush()
 
             trade = Trade(
                 position_id = position.id,
@@ -81,8 +84,34 @@ class TradingDAO:
         finally:
             self.db.close_session(session)
 
+    def update_position(self, position_id, actual_price):
+        """Update position when it has been filled"""
+        session = self.db.get_session()
+        try:
+            position = session.query(Position).filter(Position.id == position_id).first()
+            if position and position.status == 'ordered':
+                position.status = 'filled'
+                position.entry_price = actual_price
+                session.commit()
+                return True
+            return False
+        except Exception as e:
+            session.rollback()
+            print(f"Error updating positon: {e}")
+            return False
+        finally:
+            self.db.close_session(session)
+
+    def get_ordered_position(self):
+        """Get positions in 'ordered' status"""
+        session = self.db.get_session()
+        try:
+            return session.query(Position).filter(Position.status == 'ordered', Position.is_active == True).all()
+        finally:
+            self.db.close_session(session)
+
     def record_trade(self, position_id, symbol, action, quantity, price, reason):
-        """Reacord a trade transaction"""
+        """Record a trade transaction"""
         session = self.db.get_session()
         try:
             trade = Trade(

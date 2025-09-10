@@ -98,6 +98,7 @@ def log_request():
 def get_portfolio():
     """Get current portfolio summary"""
     try:
+        trading_manager.check_ordered_positions()
         summary = trading_manager.get_portfolio_summary()
         return jsonify(summary)
     except Exception as e:

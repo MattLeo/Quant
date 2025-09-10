@@ -290,31 +290,52 @@ class TradingManager:
                 current_price = current_price
             )
 
-            if order_result['success'] and order_result['filled_qty'] > 0:
+            if order_result['success']:
                 volatility = recommendation['risk_metrics']['volatility']
                 stop_price = self._calculate_stop_loss(
                     order_result['filled_avg_price'],
                     volatility
                 )
 
-                position_id = self.dao.create_position(
-                    symbol = symbol,
-                    quantity = order_result['filled_qty'],
-                    entry_price = order_result['filled_avg_price'],
-                    stop_loss_price = stop_price
-                )
+                if order_result.get('is_pending', False):
+                    position_id = self.dao.create_position(
+                        symbol = symbol,
+                        quantity = order_result['quantity'],
+                        entry_price = current_price,
+                        order_id = order_result['order_id'],
+                        status = 'ordered',
+                        stop_loss_price = stop_price
+                    )
 
-                executed_buys.append({
-                    'symbol': symbol,
-                    'quantity': order_result['filled_qty'],
-                    'price': order_result['filled_avg_price'],
-                    'stop_loss': stop_price,
-                    'order_id': order_result['order_id'],
-                    'position_id': position_id
-                })
+                    executed_buys.append({
+                        'symbol': symbol,
+                        'quantity': order_result['quantity'],
+                        'price': current_price,
+                        'status': 'ordered',
+                        'position_id': position_id
+                    })
+                    print(f"⏳ {symbol} order pending")
+                
+                elif order_result['filled_qty'] > 0:
+                    position_id = self.dao.create_position(
+                        symbol = symbol,
+                        quantity = order_result['filled_qty'],
+                        entry_price = order_result['filled_avg_price'],
+                        order_id = order_result['order_id'],
+                        status = 'filled',
+                        stop_loss_price = stop_price
+                    )
 
-                print(f"Buy order executed: {symbol} - {order_result['filled_qty']:.2f} bought at ${order_result['filled_avg_price']:.2f}")
+                    executed_buys.append({
+                        'symbol': symbol,
+                        'quantity': order_result['filled_qty'],
+                        'price': order_result['filled_avg_price'],
+                        'status': 'filled',
+                        'position_id': position_id
+                    })
 
+                    print(f"✅ {symbol} filled at ${order_result['filled_avg_price']:.2f}")
+               
             else:
                 failed_orders.append({
                     'symbol': symbol,
@@ -515,6 +536,39 @@ class TradingManager:
             print(f"Using default stop loss for {symbol}: {stop_loss_price:.2f}")
             stop_loss_price = entry_price * 0.92
             return stop_loss_price
+        
+    def check_ordered_positions(self):
+        """Check ordered positions for updates"""
+        if not self.execution_engine:
+            print("Execution engine not initialized. Cannot check ordered positions.")
+            return []
+        
+        try:
+            ordered_positions = self.dao.get_ordered_position()
+            
+            if not ordered_positions:
+                return []
+            
+            updated_positions = []
+
+            for position in ordered_positions:
+                order_status = self.execution_engine.get_order_status(position.order_id)
+
+                if order_status['success'] and order_status['is_filled']:
+                    actual_price = order_status['filled_avg_price']
+                    success = self.dao.update_position(position.id, actual_price)
+
+                    if success:
+                        updated_positions.append({
+                            'symbol': position.symbol,
+                            'estimated_price': position.entry_price,
+                            'actual_price': actual_price
+                        })
+                        print(f"{position.symbol} filled at ${actual_price:.2f}")
+            return updated_positions
+        except Exception as e:
+            print(f"Error checking ordered positions: {e}")
+            return []
 
         
     
