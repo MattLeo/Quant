@@ -153,7 +153,10 @@ class TradingManager:
             stop_loss = position.current_stop_loss
             if current_price <= stop_loss:
                 stop_triggers.append({
-                    'position': position,
+                    'position_id': position.id,
+                    'symbol': position.symbol,
+                    'quantity': position.quantity,
+                    'entry_price': position.entry_price,
                     'current_price': current_price,
                     'stop_loss': stop_loss,
                     'loss': current_price - stop_loss
@@ -170,40 +173,42 @@ class TradingManager:
         failed_orders = []
 
         for trigger in stop_triggers:
-            position = trigger['position']
+            symbol = trigger['symbol']
+            quantity = trigger['quantity']
+            position_id = trigger['position_id']
 
-            print(f"Executing stop loss for {position.symbol}...")
+            print(f"Executing stop loss for {symbol}...")
             order_result = self.execution_engine.place_sell_order(
-                symbol = position.symbol,
-                quantity = position.quantity,
+                symbol = symbol,
+                quantity = quantity,
                 reason = 'STOP_LOSS'
             )
 
             if order_result['success']:
                 trade_id = self.dao.record_trade(
-                    position_id = position.id,
-                    symbol = position.symbol,
+                    position_id = position_id,
+                    symbol = symbol,
                     action = 'SELL',
-                    quantity = position.quantity,
+                    quantity = quantity,
                     price = order_result['filled_avg_price'],
                     reason = 'STOP_LOSS'
                 )
-                self.dao.close_position(position.id)
+                self.dao.close_position(position_id)
                 
                 executed_sells.append({
-                    'symbol': position.symbol,
-                    'quantity': position.quantity,
+                    'symbol': symbol,
+                    'quantity': quantity,
                     'price': order_result['filled_avg_price'],
                     'order_id': order_result['order_id'],
                     'trade_id': trade_id
                 })
-                print(f"Stop loss executed: {position.symbol} sold at ${order_result['filled_avg_price']:.2f}")
+                print(f"Stop loss executed: {symbol} sold at ${order_result['filled_avg_price']:.2f}")
             else:
                 failed_orders.append({
-                    'symbol': position.symbol,
+                    'symbol': symbol,
                     'error': order_result['error']
                 })
-                print(f"Failed to execute stop loss for {position.symbol}: {order_result['error']}")
+                print(f"Failed to execute stop loss for {symbol}: {order_result['error']}")
         return executed_sells, failed_orders
     
     def _execute_stop_loss_sells(self, stop_triggers):
@@ -211,26 +216,29 @@ class TradingManager:
         executed_sells = []
 
         for trigger in stop_triggers:
-            position = trigger['position']
+            symbol = trigger['symbol']
+            quantity = trigger['quantity']
+            position_id = trigger['position_id']
+            entry_price = trigger['entry_price']
             current_price = trigger['current_price']
 
             trade_id = self.dao.record_trade(
-                position_id = position.id,
-                symbol = position.symbol,
+                position_id = position_id,
+                symbol = symbol,
                 action = 'SELL',
-                quantity = position.quantity,
+                quantity = quantity,
                 price = current_price,
                 reason = 'STOP_LOSS'
             )
 
-            self.dao.close_position(position.id)
+            self.dao.close_position(position_id)
 
             executed_sells.append({
-                'symbol': position.symbol,
-                'quantity': position.quantity,
-                'entry_price': position.entry_price,
+                'symbol': symbol,
+                'quantity': quantity,
+                'entry_price': entry_price,
                 'exit_price': current_price,
-                'loss': (position.entry_price - current_price) * position.quantity,
+                'loss': (entry_price - current_price) * quantity,
                 'trade_id': trade_id
             })
     
