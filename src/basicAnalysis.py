@@ -20,12 +20,12 @@ class TradingAnalysis:
 
         # Initial signal weights
         self.signal_weights = {
-            'sma_crossover': 0.25,
-            'rsi_signal': 0.2,
-            'volume_signal': 0.15,
-            'macd_signal': 0.2,
-            'bollinger_signal': 0.15,
-            #TODO add momentum signal
+            'sma_crossover': 0.22,
+            'rsi_signal': 0.18,
+            'volume_signal': 0.13,
+            'macd_signal': 0.18,
+            'bollinger_signal': 0.14,
+            'stochastic_signal': 0.15
         }
 
         # Buy/Sell Thresholds
@@ -323,6 +323,7 @@ class TradingAnalysis:
         vol_signal, vol_confidence = self.calculate_volume(data)
         macd_signal, macd_confidence = self.calculate_macd(data)
         bollinger_signal, bollinger_confidence = self.calculate_bollinger_bands(data)
+        stochastic_signal, stochastic_confidence = self.calculate_stochastic(data)
 
         risk_metrics = self.calculate_risk_metrics(data)
 
@@ -331,7 +332,8 @@ class TradingAnalysis:
             rsi_signal * rsi_confidence * self.signal_weights['rsi_signal'] +
             vol_signal * vol_confidence * self.signal_weights['volume_signal'] +
             macd_signal * macd_confidence * self.signal_weights['macd_signal'] +
-            bollinger_signal * bollinger_confidence * self.signal_weights['bollinger_signal']
+            bollinger_signal * bollinger_confidence * self.signal_weights['bollinger_signal'] +
+            stochastic_signal * stochastic_confidence * self.signal_weights['stochastic_signal']
         )
 
         total_confidence = (
@@ -339,7 +341,8 @@ class TradingAnalysis:
             rsi_confidence * self.signal_weights['rsi_signal'] +
             vol_confidence * self.signal_weights['volume_signal'] +
             macd_confidence * self.signal_weights['macd_signal'] +
-            bollinger_confidence * self.signal_weights['bollinger_signal']
+            bollinger_confidence * self.signal_weights['bollinger_signal'] +
+            stochastic_confidence * self.signal_weights['stochastic_signal']
         )
 
         # Risk adjustment
@@ -368,6 +371,7 @@ class TradingAnalysis:
                 'rsi': {'value': rsi_signal, 'confidence': rsi_confidence},
                 'macd': {'value': macd_signal, 'confidence': macd_confidence},
                 'bollinger': {'value': bollinger_signal, 'confidence': bollinger_confidence},
+                'stochastic': {'value': stochastic_signal, 'confidence': stochastic_confidence},
                 'volume': {'value': vol_signal, 'confidence': vol_confidence}
             },
             'risk_metrics': risk_metrics
@@ -644,11 +648,92 @@ class TradingAnalysis:
         except Exception as e:
             print(f"Error in Bollinger Bands calculation: {e}")
             return 0, 0
+
+    def calculate_stochastic(self, data, k_period=14, d_period=3) :
+        """Calculate Stochasitc Oscillator (%K and %D)"""
+        if len(data) < k_period + d_period :
+            return 0, 0
+        try:
+            # Calculate %K
+            low_min = data['low'].rolling(window=k_period).min()
+            high_max = data['high'].rolling(window=k_period).max()
+
+            # Avoiding division by zero
+            range_hl = high_max - low_min
+            range_hl = range_hl.replace(0, 0.01)
+
+            k_percent = ((data['close'] - low_min) / range_hl) * 100
+
+            # Calculate %D
+            d_percent = k_percent.rolling(window=d_period).mean()
+
+            current_k = k_percent.iloc[-1]
+            current_d = d_percent.iloc[-1]
+            prev_k = k_percent.iloc[-2] if len(k_percent) > 1 else current_k
+            prev_d = d_percent.iloc[-2] if len(d_percent) > 1 else current_d
+
+            if pd.isna(current_k) or pd.isna(current_d):
+                return 0, 0
             
-                
+            signal = 0
+            confidence = 0
 
+            if current_k < 20 and current_d < 20:
+                if current_k > prev_k and current_d > prev_d:
+                    signal = 0.9
+                    confidence = 0.9
+                elif current_k > current_d:
+                    signal = 0.7
+                    confidence = 0.8
+                else:
+                    signal = 0.5
+                    confidence = 0.6
+            
+            elif current_k < 30 and current_d < 30:
+                if current_k > prev_k and current_d > prev_d:
+                    signal = 0.6
+                    confidence = 0.7
+                else:
+                    signal = 0.3
+                    confidence = 0.5
+            
+            elif current_k > 80 and current_d > 80:
+                if current_k < prev_k and current_d < prev_d:
+                    signal = -0.9
+                    confidence = 0.9
+                elif current_k < current_d:
+                    signal = -0.7
+                    confidence = 0.8
+                else:
+                    signal = -0.3
+                    confidence = 0.5
+            
+            elif 30 <= current_k <= 70 and current_k > current_d and prev_k <= prev_d:
+                signal = 0.4
+                confidence = 0.6
+            
+            else:
+                k_momentum = current_k - prev_k
+                d_momentum = current_d - prev_d
 
-        
+                if k_momentum > 2 and d_momentum > 1:
+                    signal = 0.2
+                    confidence = 0.3
+                elif k_momentum < -2 and d_momentum < -1:
+                    signal = -0.2
+                    confidence = 0.3
+                else:
+                    signal = 0
+                    confidence = 0.1
 
+            extremity_factor = 1.0
+            if current_k < 10 or current_k > 90:
+                extremity_factor = 1.2
+            elif current_k < 20 or current_k > 80:
+                extremity_factor = 1.1
 
-    
+            confidence = min(1.0, confidence * extremity_factor)
+            return signal, confidence
+        except Exception as e:
+            print(f"Error calculating Stochastic Oscillator: {e}")
+            return 0, 0

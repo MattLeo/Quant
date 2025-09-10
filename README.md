@@ -28,12 +28,12 @@ enhanced_layers = {
 }
 
 enhanced_technical_signal_weights = {
-    'sma_crossover' = 0.25,
-    'rsi_signal' = 0.20,
-    'macd_signal' = 0.20,
-    'bollinger_signal' = 0.15,
-    'momentum_signal' = 0.10,
-    'volume_signal' = 0.15
+    'sma_crossover' = 0.22,
+    'rsi_signal' = 0.18,
+    'macd_signal' = 0.18,
+    'bollinger_signal' = 0.14,
+    'stochastic_signal' = 0.15,
+    'volume_signal' = 0.13
 }
 ```
 
@@ -90,8 +90,8 @@ advanced_layers = {
 - [x] Implement confidence scoring
 - [x] Add MACD signals
 - [x] Add Bollinger band signals
-- [ ] Add Stochastic Oscillation signal
-- [ ] Adjust recommendations to account for new signals
+- [x] Add Stochastic Oscillation signal
+- [x] Adjust recommendations to account for new signals
 - [ ] Clean up analysis to prevent trades being recorded while "Execute Trades" is false
 - [ ] Improve trade API logic to add placeholders for cases when trade orders are made outside of market hours
 - [x] Add frontend tweaks to show previous recommendaton if current day matches
