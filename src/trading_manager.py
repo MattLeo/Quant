@@ -20,9 +20,9 @@ class TradingManager:
         phase1_results = self._manage_existing_positions()
 
         executed_sells = []
-        failed_sells = []
-        if execute_trades and phase1_results.get('executed_sells'):
-            executed_sells, failed_sells = self.execute_stop_losses(phase1_results['stop_triggers'])
+
+        if  phase1_results.get('executed_sells'):
+            executed_sells = phase1_results['executed_sells']
 
         print("=== PHASE 2: NEW OPPORTUNITIES ===")
         phase2_results = self._find_new_opportunities(universe_type)
