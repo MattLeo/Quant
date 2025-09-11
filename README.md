@@ -49,9 +49,16 @@ advanced_layers = {
     'timeframe': '2+ years multi-timeframe',
     'risk': 'Portfolio-level risk management'
 }
+
+fundamental_weights = {
+    'pe_ratio_signal': 0.25,      # Value assessment
+    'revenue_growth': 0.25,       # Growth momentum  
+    'earnings_growth': 0.20,      # Profitability trend
+    'roe_signal': 0.15,           # Efficiency
+    'debt_ratio': 0.15            # Financial health
+}
 ```
 
----
 
 ## Data Requirements by Layer
 
@@ -101,8 +108,17 @@ advanced_layers = {
 - [x] Add position sizing logic
 - [x] Implement stop losses
 - [ ] Portfolio-level constraints
-- [ ] Add in Fundamental layer calculations
+- [ ] Increase data gathering timeline to give enough information for the new ratings
+- [ ] Add P/E Ratio Analysis
+- [ ] Add P/B Ratio 
+- [ ] Add Debt-to-Equity Ratio
+- [ ] Add Current Ratio analysis to check liquidity
+- [ ] Add Revenue Growth analysis
+- [ ] Add Earnings Growth rate analysis
+- [ ] Add ROE measurements
+- [ ] Adjust signal weighting to a new 'Fundamental' layer
 - [ ] Update recommendations based on combined Technical & Fundamental weights
+- [ ] Allow for market regieme switching based on market environment
 - [ ] Create growth capturing regime to find optimal position sell timing
 - [ ] Implement automatic analysis schedule
 - [ ] Add configuration screen to allow for users to modify schedule, API keys, etc.
@@ -111,9 +127,12 @@ advanced_layers = {
 - [ ] Improve the analysis running screen on frontend look better and give more runtime details
 
 ### Sprint 4: Optimization
+- [ ] Implement upgraded porfolio detail screen
+- [ ] Create new visualizations to show performance over time
+- [ ] Implement mixed graphing for each position (SMA, Bollinger, Volume, RSI)
 - [ ] Backtest different weightings
 - [ ] Optimize signal parameters
-- [ ] Add performance tracking
+- [ ] Add upgraded performance tracking for each position in Active Position screen
 
 ### Unscheduled: Advanced Features
 - [ ] Machine learning signal generation
