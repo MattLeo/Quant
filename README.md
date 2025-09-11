@@ -124,7 +124,7 @@ fundamental_weights = {
 - [x] Previous recommendation caching
 
 ### Sprint 3: Risk Management & Fundamental Layer 🚧
-- [] Position sizing logic improvements
+- [ ] Position sizing logic improvements
 - [x] Stop-loss implementation
 - [ ] Risk Management configuration
 - [ ] Portfolio-level risk constraints
