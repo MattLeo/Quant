@@ -1,11 +1,37 @@
-# Implementation Architecture
+# Multi-Layer Algorithmic Trading System
 
-## Phase 1: Foundation (Weeks 1-2) (Phase completed)
+A quantitative trading platform that combines technical analysis, fundamental analysis, and sentiment analysis through a layered architecture for robust stock market decision-making.
 
-Start with basic layers to establish the core framework:
+## Overview
+
+This system implements a multi-factor approach to algorithmic trading, using distinct analytical layers that can adapt to different market conditions. Unlike single-strategy systems, this layered approach provides:
+
+- **Dynamic Signal Weighting**: Adjusts strategy based on market volatility
+- **Risk Management**: Multiple exit triggers and position sizing controls  
+- **Scalability**: Add new analytical layers without rebuilding core infrastructure
+- **Market Adaptability**: Performs across different market regimes
+
+### Core Components
+
+- **Backend API**: Flask-based trading engine with database persistence
+- **Frontend Dashboard**: React-based portfolio monitoring and control interface
+- **Analysis Framework**: Multi-layer signal processing and recommendation engine
+- **Execution Engine**: Alpaca Markets integration for trade execution
+
+### Prerequisites
+
+- Python 3.8+
+- Node.js 14+
+- Alpaca Markets account (for live/paper trading)
+- Git
+
+## Implementation Architecture
+
+### Phase 1: Foundation ✅ **(Completed)**
+
+Basic signal processing and infrastructure:
 
 ```python
-# Basic implementation structure
 basic_layers = {
     'universe': 'all non-penny-stock NASDAQ and NYSE equities',
     'signals': ['SMA crossover', 'RSI', 'Volume'],
@@ -14,12 +40,11 @@ basic_layers = {
 }
 ```
 
-## Phase 2: Enhancement (Weeks 3-4)
+### Phase 2: Enhancement ✅ **(Completed)**
 
-Add more sophisticated signal processing:
+Enhanced technical analysis with multiple indicators:
 
 ```python
-# Enhanced signal processing
 enhanced_layers = {
     'universe': 'Sector-balanced screening',
     'signals': ['MACD', 'Bollinger Bands', 'Momentum'],
@@ -27,22 +52,21 @@ enhanced_layers = {
     'risk': 'Position sizing, correlation limits'
 }
 
-enhanced_technical_signal_weights = {
-    'sma_crossover' = 0.22,
-    'rsi_signal' = 0.18,
-    'macd_signal' = 0.18,
-    'bollinger_signal' = 0.14,
-    'stochastic_signal' = 0.15,
-    'volume_signal' = 0.13
+technical_signal_weights = {
+    'sma_crossover': 0.22,
+    'rsi_signal': 0.18,
+    'macd_signal': 0.18,
+    'bollinger_signal': 0.14,
+    'stochastic_signal': 0.15,
+    'volume_signal': 0.13
 }
 ```
 
-## Phase 3: Advanced (Months 2-3)
+### Phase 3: Advanced 🚧 **(In Progress)**
 
-Implement full multi-factor approach:
+Multi-factor approach with fundamental analysis:
 
 ```python
-# Advanced multi-factor implementation
 advanced_layers = {
     'universe': 'Dynamic screening with fundamental filters',
     'signals': ['Technical', 'Fundamental', 'Sentiment'],
@@ -59,132 +83,140 @@ fundamental_weights = {
 }
 ```
 
-
-## Data Requirements by Layer
+## Data Requirements
 
 ### Technical Layer
-- **Minimum**: 6 months daily OHLCV
-- **Optimal**: 2 years daily + 3 months intraday
-- **Indicators**: Price, volume, volatility metrics
+- **Minimum**: 6 months daily OHLCV data
+- **Optimal**: 2+ years daily + 3 months intraday
+- **Sources**: Real-time price feeds, volume data
 
 ### Fundamental Layer
-- **Quarterly earnings**: 2+ years historical data
-- **Financial ratios**: P/E, P/B, ROE, debt ratios
-- **Growth metrics**: Revenue/earnings growth rates
+- **Financial Statements**: 2+ years quarterly earnings
+- **Ratios**: P/E, P/B, ROE, debt-to-equity, current ratio
+- **Growth Metrics**: Revenue and earnings growth rates
 
 ### Sentiment Layer
-- **Analyst ratings**: Real-time + 1 year history
-- **Options flow**: Current day + 30-day history
-- **News sentiment**: Real-time feeds
+- **Analyst Ratings**: Real-time + 1 year historical
+- **Options Flow**: Current day + 30-day history  
+- **News Sentiment**: Real-time news feeds
 
-### Risk Layer
-- **Correlations**: 1+ year daily returns
-- **Volatility**: 6 months minimum
-- **Market regime**: 2+ years for regime detection
+### Risk Management Layer
+- **Correlations**: 1+ year daily returns for correlation analysis
+- **Volatility**: 6+ months for volatility calculations
+- **Market Regime**: 2+ years for regime detection
 
----
+## Development Roadmap
 
-## Implementation Roadmap
+### Sprint 1: Core Framework ✅
+- [x] Basic signal calculation infrastructure
+- [x] Simple signal aggregation logic
+- [x] Testing framework with sample stocks
+- [x] React frontend dashboard implementation
 
-### Sprint 1: Core Framework
-- [x] Set up basic signal calculation
-- [x] Implement simple aggregation
-- [x] Test with 5-10 stocks
-- [x] Frontend Dashboard using React
+### Sprint 2: Signal Enhancement ✅
+- [x] Automated deployment pipeline
+- [x] Confidence scoring system
+- [x] MACD signal implementation
+- [x] Bollinger Bands analysis
+- [x] Stochastic Oscillator signals
+- [x] Multi-signal recommendation engine
+- [x] Market hours trade execution handling
+- [x] Previous recommendation caching
 
-### Sprint 2: Signal Enhancement
-- [x] Create Automated Deployment
-- [x] Implement confidence scoring
-- [x] Add MACD signals
-- [x] Add Bollinger band signals
-- [x] Add Stochastic Oscillation signal
-- [x] Adjust recommendations to account for new signals
-- [x] Clean up analysis to prevent trades being recorded while "Execute Trades" is false
-- [x] Improve trade API logic to add placeholders for cases when trade orders are made outside of market hours
-- [x] Add frontend tweaks to show previous recommendaton if current day matches
-- [ ] Test signal combinations (2 weeks)
+### Sprint 3: Risk Management & Fundamentals 🚧
+- [x] Position sizing logic
+- [x] Stop-loss implementation
+- [ ] Portfolio-level risk constraints
+- [ ] Fundamental analysis layer:
+  - [ ] P/E Ratio analysis
+  - [ ] P/B Ratio evaluation
+  - [ ] Debt-to-Equity ratio assessment
+  - [ ] Current ratio liquidity analysis
+  - [ ] Revenue growth tracking
+  - [ ] Earnings growth analysis
+  - [ ] ROE measurements
+- [ ] Combined Technical + Fundamental weighting
+- [ ] Market regime detection and switching
+- [ ] Growth capture timing optimization
+- [ ] User configuration interface
+- [ ] Update workflow for deployed instances
 
-### Sprint 3: Risk Management
-- [x] Add position sizing logic
-- [x] Implement stop losses
-- [ ] Portfolio-level constraints
-- [ ] Increase data gathering timeline to give enough information for the new ratings
-- [ ] Add P/E Ratio Analysis
-- [ ] Add P/B Ratio 
-- [ ] Add Debt-to-Equity Ratio
-- [ ] Add Current Ratio analysis to check liquidity
-- [ ] Add Revenue Growth analysis
-- [ ] Add Earnings Growth rate analysis
-- [ ] Add ROE measurements
-- [ ] Adjust signal weighting to a new 'Fundamental' layer
-- [ ] Update recommendations based on combined Technical & Fundamental weights
-- [ ] Allow for market regime switching based on market environment
-- [ ] Create growth capturing regime to find optimal position sell timing
-- [ ] Implement automatic analysis schedule
-- [ ] Add configuration screen to allow for users to modify schedule, API keys, etc.
-- [ ] Create Update workflow for already deployed instances
-- [ ] Add frontend improvments (growth stats, historygram, single stock detail window)
-- [ ] Improve the analysis running screen on frontend look better and give more runtime details
+### Sprint 4: Optimization & UI Improvements 
+- [ ] Enhanced portfolio detail screens
+- [ ] Performance visualization over time
+- [ ] Individual position charting (SMA, Bollinger, Volume, RSI)
+- [ ] Automated analysis scheduling
+- [ ] Proton-based UI implementation
+- [ ] Google Drive database synchronization
+- [ ] Signal parameter optimization via backtesting
+- [ ] Advanced performance tracking per position
 
-### Sprint 4: Optimization
-- [ ] Implement upgraded porfolio detail screen
-- [ ] Create new visualizations to show performance over time
-- [ ] Implement mixed graphing for each position (SMA, Bollinger, Volume, RSI)
-- [ ] Backtest different weightings
-- [ ] Optimize signal parameters
-- [ ] Add upgraded performance tracking for each position in Active Position screen
-
-### Unscheduled: Advanced Features
+### Future: Advanced Features 
 - [ ] Machine learning signal generation
-- [ ] Alternative data integration
+- [ ] Alternative data integration (satellite, social media)
 - [ ] Real-time execution system
+- [ ] Options trading strategies
+- [ ] Cryptocurrency support
 
----
-
-## Key Design Decisions
+## System Design
 
 ### Signal Weighting Strategy
 
-Dynamic weighting based on market conditions:
+The system dynamically adjusts signal weights based on market conditions:
 
 ```python
 def adjust_weights_by_market_regime(current_signals, market_vol):
-    """
-    Adjust signal weights based on market volatility regime
-    """
+    """Adjust signal weights based on market volatility regime"""
     if market_vol > 30:  # High volatility regime
         return {
-            'technical': 0.5,    # More weight on technical signals
-            'fundamental': 0.3,  # Less on fundamental signals
+            'technical': 0.5,    # Favor technical signals
+            'fundamental': 0.3,  # Reduce fundamental weight
             'sentiment': 0.2
         }
     else:  # Low volatility regime
         return {
             'technical': 0.3,
-            'fundamental': 0.5,  # More weight on fundamentals
+            'fundamental': 0.5,  # Favor fundamental analysis
             'sentiment': 0.2
         }
 ```
 
-### Entry/Exit Timing
-- **Entries**: Require 2+ layers agreeing
-- **Exits**: Any layer can trigger (risk management priority)
-- **Position sizing**: Based on conviction + risk assessment
+### Entry/Exit Logic
+- **Entry Signals**: Require agreement from 2+ analytical layers
+- **Exit Signals**: Any layer can trigger (risk management priority)
+- **Position Sizing**: Based on signal conviction + risk assessment
 
----
-
-## Expected Performance Benefits
+## Expected Performance
 
 | Metric | Single Strategy | Layered Approach |
 |--------|----------------|------------------|
 | **Win Rate** | ~60% | 70%+ |
 | **Volatility** | High | Smoother returns |
-| **Robustness** | Market dependent | Works across conditions |
+| **Robustness** | Market dependent | Multi-regime adaptability |
 | **Drawdown Control** | Limited | Multiple exit triggers |
-| **Scalability** | Requires rebuilding | Add layers incrementally |
+| **Scalability** | Requires rebuilding | Incremental layer addition |
 
 ### Key Advantages
-- **Robustness**: Works across different market conditions
-- **Drawdown Control**: Multiple exit triggers provide better risk management
-- **Scalability**: Add new layers without rebuilding existing infrastructure
-- **Flexibility**: Dynamic weight adjustment based on market regime
+- **Cross-Market Robustness**: Adapts to different market conditions
+- **Enhanced Risk Control**: Multiple exit triggers and portfolio constraints
+- **Modular Architecture**: Add new strategies without system redesign
+- **Dynamic Adaptability**: Real-time weight adjustment based on market regime
+
+## API Endpoints
+
+The system exposes a RESTful API for frontend integration:
+
+- `GET /api/portfolio` - Portfolio summary and metrics
+- `GET /api/positions` - Current active positions
+- `GET /api/trades` - Historical trade data
+- `GET /api/analysis/results` - Latest analysis recommendations
+- `POST /api/analysis/run` - Trigger new analysis execution
+- `POST /api/trades/execute` - Execute recommended trades
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## ⚠️ Disclaimer ⚠️
+
+This software is for educational and research purposes only. Past performance does not guarantee future results. Always consult with a financial advisor before making investment decisions. Use at your own risk.
