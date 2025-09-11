@@ -123,8 +123,8 @@ fundamental_weights = {
 - [x] Market hours trade execution handling
 - [x] Previous recommendation caching
 
-### Sprint 3: Risk Management & Fundamentals 🚧
-- [x] Position sizing logic
+### Sprint 3: Risk Management & Fundamental Layer 🚧
+- [] Position sizing logic improvements
 - [x] Stop-loss implementation
 - [ ] Portfolio-level risk constraints
 - [ ] Fundamental analysis layer:
