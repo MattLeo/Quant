@@ -17,7 +17,7 @@ class TradingManager:
     def run_full_analysis(self, universe_type, execute_trades=False):
         """Run completed two-phase analysis with optional trade execution"""
         print("=== PHASE 1: POSITION MANAGEMENT ===")
-        phase1_results = self._manage_existing_positions(execute_trades)
+        phase1_results = self._manage_existing_positions()
 
         executed_sells = []
         failed_sells = []
