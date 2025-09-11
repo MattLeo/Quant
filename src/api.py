@@ -134,13 +134,14 @@ def get_analysis_results():
                 'sell_list': json.loads(results.sell_recommendations)
             }
 
+            """ # Commenting thise section out to allow for all recommendations to be shown
             owned_symbols = dao.get_owned_symbols()
             if owned_symbols:
                 recommendations['buy_list'] = [
                     rec for rec in recommendations['buy_list'] 
                     if rec['symbol'] not in owned_symbols
                 ]
-
+            """
             return jsonify({
                 'id': results.id,
                 'analysis_date': results.analysis_date,

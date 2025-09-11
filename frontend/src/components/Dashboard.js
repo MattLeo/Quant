@@ -53,6 +53,7 @@ function Dashboard() {
             await fetchPortfolio();
             await fetchPositions();
             await fetchHistory();
+            await fetchRecommendations();
         } catch (error) {
             console.error('Error running analysis:', error);
         } finally {
