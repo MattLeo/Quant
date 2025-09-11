@@ -152,6 +152,15 @@ fundamental_weights = {
 - [ ] Signal parameter optimization via backtesting
 - [ ] Advanced performance tracking per position
 
+### Sprint 5: Sentiment Layer Development
+- [ ] Implement limited news feed scraping
+- [ ] Decipher sentiment from scraped news feeds
+- [ ] Implement insider trading scraper from SEC filings
+- [ ] Build a signal generator from the scraped feeds
+- [ ] Incorporate sentiment signal into recommendations
+- [ ] Backtest with previous versions and market regimes to quantify improvement
+- [ ] Expand out corpus of news feeds to maximize signal accuracy
+
 ### Future: Advanced Features 
 - [ ] Machine learning signal generation
 - [ ] Alternative data integration (satellite, social media)
