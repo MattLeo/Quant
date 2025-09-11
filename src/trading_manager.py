@@ -21,7 +21,7 @@ class TradingManager:
 
         executed_sells = []
 
-        if  phase1_results.get('executed_sells'):
+        if phase1_results.get('executed_sells'):
             executed_sells = phase1_results['executed_sells']
 
         print("=== PHASE 2: NEW OPPORTUNITIES ===")
