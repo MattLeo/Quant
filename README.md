@@ -118,7 +118,7 @@ fundamental_weights = {
 - [ ] Add ROE measurements
 - [ ] Adjust signal weighting to a new 'Fundamental' layer
 - [ ] Update recommendations based on combined Technical & Fundamental weights
-- [ ] Allow for market regieme switching based on market environment
+- [ ] Allow for market regime switching based on market environment
 - [ ] Create growth capturing regime to find optimal position sell timing
 - [ ] Implement automatic analysis schedule
 - [ ] Add configuration screen to allow for users to modify schedule, API keys, etc.
