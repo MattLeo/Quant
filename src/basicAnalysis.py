@@ -3,23 +3,31 @@ import numpy as np
 from datetime import datetime, timedelta
 import alpaca_trade_api as tradeapi
 import time
-import os
 import logging
+from execution_engine import ExecutionEngine
 
 logger = logging.getLogger("console_log")
 
 class TradingAnalysis:
     """Trading analysis of stocks to track performance"""
 
-    def __init__(self, api_key, secret_key):
+    def __init__(self, api_key, secret_key, alpha_key, vol_regime='high'):
         self.api = tradeapi.REST(
             key_id=api_key,
             secret_key=secret_key,
             base_url='https://paper-api.alpaca.markets'
         )
 
+        self.execution_engine = ExecutionEngine(
+            api_key=api_key,
+            secret_key=secret_key,
+            alpha_key=alpha_key,
+            paper_trading=True,
+            auto_execute=True
+       )
+
         # Initial signal weights
-        self.signal_weights = {
+        self.technical_weights = {
             'sma_crossover': 0.22,
             'rsi_signal': 0.18,
             'volume_signal': 0.13,
@@ -27,6 +35,27 @@ class TradingAnalysis:
             'bollinger_signal': 0.14,
             'stochastic_signal': 0.15
         }
+
+        self.fundamental_weights = {
+            'pe_ratio': 0.20,
+            'rev_growth': 0.15,
+            'earnings_growth': 0.18,
+            'roe_signal': 0.15,
+            'debt_to_equity;': 0.12,
+            'pb_ratio': 0.12,
+            'current_ratio': 0.08 
+        }
+
+        if vol_regime == 'high':
+            self.layer_weights = {
+                'techincal': 0.7,
+                'fundamental': 0.3
+            }
+        else:
+            self.layer_weights = {
+                'technical': 0.3,
+                'fundamental': 0.7
+            }
 
         # Buy/Sell Thresholds
         self.buy_threshold = 0.3
@@ -317,6 +346,21 @@ class TradingAnalysis:
             logger.info(f"    ✗ Insufficient data for {symbol}\n")
             return None
         
+        overview = self.execution_engine.get_alpha_data('OVERVIEW', symbol)
+        if overview is None:
+            print(f"    ✗ No overview data for {symbol}")
+            logger.info(f"    ✗ No overview data for {symbol}\n")
+
+        balance_sheet = self.execution_engine.get_alpha_data('BALANCE_SHEET', symbol)
+        if balance_sheet is None or len(balance_sheet['quarterly_reports']) < 8:
+            print(f"    ✗ No balance sheet data for {symbol}")
+            logger.info(f"    ✗ No balance sheet data for {symbol}\n")
+
+        income_statement = self.execution_engine.get_alpha_data('INCOME_STATEMENT', symbol)
+        if income_statement is None or len(income_statement['quarterly_reports']) < 8:
+            print(f"    ✗ No income statement data for {symbol}")
+            logger.info(f"    ✗ No income statement data for {symbol}\n")
+
         # Calculating all signals
         sma_signal, sma_confidence = self.calculate_sma(data)
         rsi_signal, rsi_confidence = self.calculate_rsi(data)
@@ -325,24 +369,64 @@ class TradingAnalysis:
         bollinger_signal, bollinger_confidence = self.calculate_bollinger_bands(data)
         stochastic_signal, stochastic_confidence = self.calculate_stochastic(data)
 
+        pe_signal, pe_confidence = self.calculate_pe(overview)
+        pb_signal, pb_confidence = self.calculate_pb(overview)
+        roe_signal, roe_confidence, roe = self.calculate_roe(overview)
+        current_signal, current_confidence = self.calculate_current_ratio(balance_sheet)
+        dte_signal, dte_confidence = self.calculate_debt_to_equity(balance_sheet, roe)
+        rev_growth_signal, rev_growth_confidence = self.calculate_revenue_growth(income_statement)
+        earnings_singal, earnings_confidence = self.calculate_earnings_growth(income_statement)
+
+        
+
         risk_metrics = self.calculate_risk_metrics(data)
 
+        technical_signal = {
+            sma_signal * sma_confidence * self.technical_weights['sma_crossover'] +
+            rsi_signal * rsi_confidence * self.technical_weights['rsi_signal'] +
+            vol_signal * vol_confidence * self.technical_weights['volume_signal'] +
+            macd_signal * macd_confidence * self.technical_weights['macd_signal'] +
+            bollinger_signal * bollinger_confidence * self.technical_weights['bollinger_signal'] +
+            stochastic_signal * stochastic_confidence * self.technical_weights['stochastic_signal']
+        }
+
+        fundamental_signal = {
+            pe_signal * pe_confidence * self.fundamental_weights['pe_ratio'] +
+            pb_signal * pb_confidence * self.fundamental_weights['pb_ratio'] +
+            roe_signal * roe_confidence * self.fundamental_weights['roe_signal'] +
+            current_signal * current_confidence * self.fundamental_weights['current_ratio'] +
+            dte_signal * dte_confidence * self.fundamental_weights['debt_to_equity'] +
+            rev_growth_signal * rev_growth_confidence * self.fundamental_weights['rev_growth'] +
+            earnings_singal * earnings_confidence * self.fundamental_weights['earnings_growth']
+        }
+
+        technical_confidence = {
+            sma_confidence * self.technucal_weights['sma_crossover'] +
+            rsi_confidence * self.technical_weights['rsi_signal'] +
+            vol_confidence * self.technical_weights['volume_signal'] +
+            macd_confidence * self.technical_weights['macd_signal'] +
+            bollinger_confidence * self.technical_weights['bollinger_signal'] +
+            stochastic_confidence * self.technical_weights['stochastic_signal']
+        }
+
+        fundamental_confidence = {
+            pe_confidence * self.fundamental_weights['pe_ratio'] +
+            pb_confidence * self.fundamental_weights['pb_ratio'] +
+            roe_confidence * self.fundamental_weights['roe_signal'] +
+            current_confidence * self.fundamental_weights['current_ratio'] +
+            dte_confidence * self.fundamental_weights['debt_to_equity'] +
+            rev_growth_confidence * self.fundamental_weights['rev_growth'] +
+            earnings_confidence * self.fundamental_weights['earnings_growth']
+        }
+
         total_signal = (
-            sma_signal * sma_confidence * self.signal_weights['sma_crossover'] +
-            rsi_signal * rsi_confidence * self.signal_weights['rsi_signal'] +
-            vol_signal * vol_confidence * self.signal_weights['volume_signal'] +
-            macd_signal * macd_confidence * self.signal_weights['macd_signal'] +
-            bollinger_signal * bollinger_confidence * self.signal_weights['bollinger_signal'] +
-            stochastic_signal * stochastic_confidence * self.signal_weights['stochastic_signal']
+            technical_signal * self.layer_weights['technical'] +
+            fundamental_signal * self.layer_weights['fundamental']
         )
 
         total_confidence = (
-            sma_confidence * self.signal_weights['sma_crossover'] +
-            rsi_confidence * self.signal_weights['rsi_signal'] +
-            vol_confidence * self.signal_weights['volume_signal'] +
-            macd_confidence * self.signal_weights['macd_signal'] +
-            bollinger_confidence * self.signal_weights['bollinger_signal'] +
-            stochastic_confidence * self.signal_weights['stochastic_signal']
+            technical_confidence + self.layer_weights['technical'] +
+            fundamental_confidence + self.layer_weights['fundamental']
         )
 
         # Risk adjustment
@@ -372,7 +456,14 @@ class TradingAnalysis:
                 'macd': {'value': macd_signal, 'confidence': macd_confidence},
                 'bollinger': {'value': bollinger_signal, 'confidence': bollinger_confidence},
                 'stochastic': {'value': stochastic_signal, 'confidence': stochastic_confidence},
-                'volume': {'value': vol_signal, 'confidence': vol_confidence}
+                'volume': {'value': vol_signal, 'confidence': vol_confidence},
+                'pe': {'value': pe_signal, 'confidence': pe_confidence},
+                'pb': {'value': pb_signal, 'confidence': pb_confidence},
+                'roe': {'value': roe_signal, 'confidence': roe_confidence},
+                'current_ratio': {'value': current_signal, 'confidence': current_confidence},
+                'debt_to_equity': {'value': dte_signal, 'confidence': dte_confidence},
+                'rev_growth': {'value': rev_growth_signal, 'confidence': rev_growth_confidence},
+                'earnings_growth': {'value': earnings_singal, 'confidence': earnings_confidence}
             },
             'risk_metrics': risk_metrics
         }
@@ -736,4 +827,280 @@ class TradingAnalysis:
             return signal, confidence
         except Exception as e:
             print(f"Error calculating Stochastic Oscillator: {e}")
+            return 0, 0
+        
+    def calculate_pe(self, overview): 
+        """Calculate the Price to Earnings signal for a stock"""
+        try:
+            try:
+                pe_ratio = float(overview.get('PERatio', 0))
+            except (ValueError, TypeError):
+                return 0, 0
+            
+            if pe_ratio > 0:
+                pe_signal =  max(-0.9, min(0.9, (20 - pe_ratio) / 12.5))
+            else:
+                pe_signal = -0.9
+
+            if pe_ratio < 0 or pe_ratio > 50:
+                pe_confidence = 0.9
+            elif pe_ratio < 10 or pe_ratio > 35:
+                pe_confidence = 0.8
+            elif pe_ratio < 12 or pe_ratio > 30:
+                pe_confidence = 0.6
+            else:
+                pe_confidence = 0.4
+
+            return pe_signal, pe_confidence
+        
+        except Exception as e:
+            print(f"Error calculating Price to Earnings signal: {e}")
+            return 0, 0
+        
+    def calculate_pb(self, overview):
+        """Caluclate the Price to Book signal for a stock"""
+
+        try:
+            try:
+                pb_ratio = float(overview.get('PriceToBookRatio', 0))
+            except (ValueError, TypeError):
+                return 0, 0
+            
+            if pb_ratio > 0:
+                signal = max(-0.9, min(0.9, (2.4 - pb_ratio) / 2.0))
+                confidence = min(0.9, abs(signal) + 0.3)
+            else:
+                signal = -0.9
+                confidence = 0.9
+            
+            return signal, confidence
+        
+        except Exception as e:
+            print(f"Error calculating Price to Book signal: {e}")
+
+    def calculate_roe(self, overview):
+        """Calculate the Return on Equity signal for a stock"""
+
+        try:
+            try:
+                roe = float(overview.get('ReturnOnEquityTTM', 0))
+            except (ValueError, TypeError):
+                return 0, 0
+
+            if roe > 0:
+                signal = min(0.8, max(-0.2, (roe - 10) / 12.5))
+                confidence = min(0.9, abs(signal) * 0.8 + 0.4)
+            else:
+                signal = -0.8
+                confidence = 0.9
+
+            return signal, confidence, roe
+
+        except Exception as e:
+            print(f"Error calculating Return on Equity signal: {e}")
+
+    def calculate_current_ratio(self, balance_sheet):
+        """Calculate the Current Liquidity Ratio for a company"""
+        try:
+            quarterly_report = balance_sheet.get('quarterlyReports', [])[0]
+            if quarterly_report is None or len(quarterly_report) == 0:
+                return 0, 0
+            
+            try:
+                current_assets = float(quarterly_report.get('totalCurrentAssets', 0))
+            except (ValueError, TypeError):
+                current_assets = 0.0
+            try:    
+                current_liabilities = float(quarterly_report.get('totalCurrentLiabilities', 0))
+            except (ValueError, TypeError):
+                current_liabilities = 0.01
+            
+            if current_liabilities == 0:
+                current_liabilities = 0.01 # Protecting against divide by zero issues
+
+            current_ratio = current_assets / current_liabilities
+
+            if current_ratio <= 2.0:
+                signal = max(-0.7, (current_ratio - 0.5) / 1.5 * 0.6)
+            else:
+                signal = max(-0.1, 0.6 - (current_ratio - 2.0) * 0.2)
+
+            confidence = min(0.8, abs(signal) * 0.8 + 0.3)
+
+            return signal, confidence
+        except Exception as e:
+            print(f"Error calculating Current Ratio: {e}")
+            return 0, 0
+        
+    def calculate_debt_to_equity(self, balance_sheet, roe):
+        """Calculate the Debt to Equity Ratio for a company"""
+        try:
+            quarterly_report = balance_sheet.get('quarterlyReports', [])[0]
+            if quarterly_report is None or len(quarterly_report) == 0:
+                return 0, 0
+            
+            try:
+                total_assets = float(quarterly_report.get('totalAssets', 0))
+            except (ValueError, TypeError):
+                total_assets = 0.0
+            try:
+                total_liabilities = float(quarterly_report.get('totalLiabilities', 0))
+            except (ValueError, TypeError):
+                total_liabilities = 0.0
+
+            equity = total_assets - total_liabilities
+            if equity == 0:
+                equity = 0.01
+
+            try:
+                total_debt = float(quarterly_report.get('totalDebt', 0))
+            except (ValueError, TypeError):
+                total_debt = 0.0
+            
+            debt_to_equity = total_debt / equity
+
+            if debt_to_equity <= 0.5:
+                signal = min(0.6, debt_to_equity * 1.2)
+            else:
+                signal = max(-0.8, 0.6 - (debt_to_equity - 0.5) * 0.8)
+
+            if roe > 15 and debt_to_equity < 1.0:
+                signal = min(1.0, signal + 0.1)
+            elif roe < 5 and debt_to_equity > 0.8:
+                signal = max(-1.0, signal - 0.2)
+
+            if debt_to_equity > 2.0 or debt_to_equity < 0.05:
+                confidence = 0.9
+            else:
+                confidence = min(0.8, abs(signal) * 0.6 + 0.4)
+
+            return signal, confidence
+        except Exception as e:
+            print(f"Error calculating Debt to Equity Ratio: {e}")
+            return 0, 0
+        
+    def calculate_weighted_revenue_growth(quarters):
+        """
+        Calculate the year-over-year revenue growth with recent quarters
+        weighted more heavily
+        """
+        yoy_rates = []
+        weights = [0.4, 0.3, 0.2, 0.1]
+
+        for i in range(4):
+            try:
+                current = quarters[i].get('totalRevnue', 0)
+            except (ValueError, TypeError):
+                current = 0.0
+            try:
+                previous_year = quarters[i + 4].get('totalRevnue', 0)
+            except (ValueError, TypeError):
+                previous_year = 0.0
+            if previous_year == 0:
+                previous_year = 0.01
+            yoy_growth = (current - previous_year) / previous_year * 100
+            yoy_rates.append(yoy_growth)
+
+        weighted_growth = sum(rate * weight for rate, weight in zip(yoy_rates, weights))
+        return weighted_growth
+            
+    def calculate_revenue_growth_signal(self, income_statement):
+        """Calculate the year-over-year revenue growth"""
+        try:
+            quarterly_reports = income_statement.get('quarterlyReports', [])
+            if len(quarterly_reports) < 8:
+                return 0, 0
+            
+            quarters = quarterly_reports[:8]
+            growth = self.calculate_weighted_revenue_growth(quarters)
+
+            if growth < -10:
+                signal = -0.8
+                confidence = 0.8
+            elif growth < 0:
+                signal = -0.3
+                confidence = 0.6
+            elif growth < 5:
+                signal = 0.1
+                confidence = 0.5
+            elif growth < 15:
+                signal = 0.5
+                confidence = 0.7
+            elif growth < 25:
+                signal = 0.7
+                confidence = 0.8
+            else:
+                signal = 0.8
+                confidence = 0.7
+            
+            return signal, confidence
+        except Exception as e:
+            print(f"Error calculating Revenue Growth: {e}")
+            return 0, 0
+
+    def earnings_growth_calculator(current, previous):
+        """Handle negative earnings gracefully"""
+
+        if previous <= 0 and current > 0:
+            return 100.0
+        elif previous > 0 and current <= 0:
+            return -100.0
+        elif previous <= 0 and current <= 0:
+            return 0.0
+        else:
+            if previous == 0:
+                previous = 0.01
+            return (current - previous) / previous * 100
+        
+    def calculate_earnings_growth(self, income_statement):
+        """Calculate the year-over-year earnings growth"""
+        try:
+            quarterly_reports = income_statement.get('quarterlyReports', [])
+            if len(quarterly_reports) < 8:
+                return 0, 0
+
+            quarters = quarterly_reports[:8]
+            
+            yoy_rates = []
+            for i in range(4):
+                try:
+                    current = quarters[i].get('retainedEarnings', 0)
+                except (ValueError, TypeError):
+                    current = 0.0
+                try:
+                    previous = quarters[i + 4].get('retainedEarnings', 0)
+                except (ValueError, TypeError):
+                    previous = 0.0
+                growth = self.earnings_growth_calculator(current, previous)
+                yoy_rates.append(growth)
+            
+            filtered_rates = [rate for rate in yoy_rates if -200 < rate < 200]
+
+            growth_rate = sum(filtered_rates) / len(filtered_rates) if filtered_rates else 0
+
+            if growth_rate < -25:
+                signal = -0.9
+                confidence = 0.9
+            elif growth_rate < -10:
+                signal = -0.5
+                confidence = 0.7
+            elif growth_rate < 0:
+                signal = -0.2
+                confidence = 0.5
+            elif growth_rate < 10:
+                signal = 0.2
+                confidence = 0.6
+            elif growth_rate < 20:
+                signal = 0.6
+                confidence = 0.8
+            elif growth_rate < 40:
+                signal = 0.8
+                confidence = 0.8
+            else:
+                signal = 0.7
+                confidence = 0.6
+            
+            return signal, confidence
+        except Exception as e:
+            print(f"Error calculating Earnings Growth: {e}")
             return 0, 0

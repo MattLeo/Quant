@@ -50,8 +50,9 @@ def load_config():
         secret_key = config['alpaca']['secret']
         results_folder = config['settings']['results_folder']
         universe_type = config['settings']['universe_type']
+        alpha_key = config['alpha_vantage']['api_key']
     
-    return api_key, secret_key, results_folder, universe_type
+    return api_key, secret_key, results_folder, alpha_key, universe_type
 
 def init_logger():
     logger = logging.getLogger('console_log')
@@ -77,8 +78,8 @@ def init_logger():
 init_database()
 logger = init_logger()
 dao = TradingDAO()
-api_key, secret_key, results_folder, universe_type = load_config()
-framework = TradingAnalysis(api_key, secret_key)
+api_key, secret_key, results_folder, universe_type, alpha_key = load_config()
+framework = TradingAnalysis(api_key, secret_key, alpha_key)
 trading_manager = TradingManager(
     dao,
     framework,

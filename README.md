@@ -75,11 +75,13 @@ advanced_layers = {
 }
 
 fundamental_weights = {
-    'pe_ratio_signal': 0.25,      # Value assessment
-    'revenue_growth': 0.25,       # Growth momentum  
-    'earnings_growth': 0.20,      # Profitability trend
-    'roe_signal': 0.15,           # Efficiency
-    'debt_ratio': 0.15            # Financial health
+    'pe_ratio': 0.20,
+    'rev_growth': 0.15,
+    'earnings_growth': 0.18,
+    'roe_signal': 0.15,
+    'debt_to_equity;': 0.12,
+    'pb_ratio': 0.12,
+    'current_ratio': 0.08 
 }
 ```
 
@@ -129,13 +131,13 @@ fundamental_weights = {
 - [ ] Risk Management configuration
 - [ ] Portfolio-level risk constraints
 - [ ] Fundamental analysis layer:
-  - [ ] P/E Ratio analysis
-  - [ ] P/B Ratio evaluation
+  - [x] P/E Ratio analysis
+  - [x] P/B Ratio evaluation
   - [ ] Debt-to-Equity ratio assessment
-  - [ ] Current ratio liquidity analysis
+  - [x] Current ratio liquidity analysis
   - [ ] Revenue growth tracking
   - [ ] Earnings growth analysis
-  - [ ] ROE measurements
+  - [x] ROE measurements
 - [ ] Combined Technical + Fundamental weighting
 - [ ] Market regime detection and switching
 - [ ] Growth capture timing optimization

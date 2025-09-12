@@ -4,13 +4,13 @@ from datetime import datetime
 from execution_engine import ExecutionEngine
 
 class TradingManager:
-    def __init__(self, dao, analysis_framework, api_key=None, secret_key=None, paper_trading=True, auto_execute=False):
+    def __init__(self, dao, analysis_framework, api_key=None, secret_key=None, alpha_key=None, paper_trading=True, auto_execute=False):
         self.dao = dao
         self.framework = analysis_framework
         self.auto_execute = auto_execute
 
         if api_key and secret_key:
-            self.execution_engine = ExecutionEngine(api_key, secret_key, paper_trading)
+            self.execution_engine = ExecutionEngine(api_key, secret_key, alpha_key, paper_trading)
         else:
             self.execution_engine = None
     

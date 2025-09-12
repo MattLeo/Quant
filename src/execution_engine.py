@@ -1,11 +1,13 @@
 import alpaca_trade_api as tradeapi
 import time
+import requests
 
 class ExecutionEngine:
-    def __init__(self, api_key, secret_key, paper_trading=True):
+    def __init__(self, api_key, secret_key, alpha_key, paper_trading=True):
         base_url = 'https://paper-api.alpaca.markets' if paper_trading else 'https://api.alpaca.markets'
         self.api = tradeapi.REST(key_id=api_key, secret_key=secret_key, base_url=base_url)
         self.paper_trading = paper_trading
+        self.alpha_key = alpha_key
 
     def get_account_info(self):
         """Get current account info"""
@@ -183,3 +185,12 @@ class ExecutionEngine:
             }
         except Exception as e:
             return {'success': False, 'error':  {str(e)}}
+        
+    def get_alpha_data(self, function, symbol):
+        """
+        Get data from Alpha Vantage
+        functions: OVERVIEW | BALANCE_SHEET | INCOME_STATEMENT
+        """
+        url = f'https://www.alphavantage.co/query?function={function}&symbol={symbol}&apikey={self.alpha_key}'
+        response = requests.get(url)
+        return response.json()
