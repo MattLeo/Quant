@@ -126,6 +126,7 @@ fundamental_weights = {
 ### Sprint 3: Risk Management & Fundamental Layer 🚧
 - [x] Position sizing logic improvements
 - [x] Stop-loss implementation
+
 - [ ] Risk Management configuration
 - [ ] Portfolio-level risk constraints
 - [ ] Fundamental analysis layer:
