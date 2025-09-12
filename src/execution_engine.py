@@ -25,13 +25,24 @@ class ExecutionEngine:
             print(f"Error fetching account info: {e}")
             return None
         
-    def calculate_position_size(self, signal_strength, confidence, account_value, max_position_percent=0.02):
+    def calculate_position_size(self, signal_strength, confidence, account_value, cash_balance, max_position_percent=0.06):
         """Calculate position size based on signal strength and risk management"""
-        base_size = account_value * max_position_percent
-        adjustment_factor = (abs(signal_strength) * confidence)
-        adjusted_size = base_size * adjustment_factor
-        max_size = account_value * 0.05 # Keeping maximum investment size to 5% of account
-        return min(adjusted_size, max_size)
+        signal_quality = abs(signal_strength) * confidence
+
+        if signal_quality > 0.8:
+            base_percent = 0.05
+        elif signal_quality > 0.6:
+            base_percent = 0.03
+        else:
+            base_percent = 0.015
+        
+        position_size = base_percent * account_value
+        if position_size > cash_balance:
+            position_size = cash_balance
+        
+        max_position = max_position_percent * account_value
+        
+        return min(position_size, max_position)
     
     def place_buy_order(self, symbol, signal_strength, confidence, current_price):
         """Place a buy order for a stock"""
@@ -46,7 +57,8 @@ class ExecutionEngine:
             position_value = self.calculate_position_size(
                 signal_strength,
                 confidence,
-                account_info['portfolio_value']
+                account_info['portfolio_value'],
+                account_info['cash']
             )
 
             raw_shares = position_value / current_price
