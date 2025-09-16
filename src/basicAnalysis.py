@@ -6,12 +6,13 @@ import time
 import logging
 from execution_engine import ExecutionEngine
 
+
 logger = logging.getLogger("console_log")
 
 class TradingAnalysis:
     """Trading analysis of stocks to track performance"""
 
-    def __init__(self, api_key, secret_key, alpha_key, vol_regime='high'):
+    def __init__(self, api_key, secret_key, vol_regime='high'):
         self.api = tradeapi.REST(
             key_id=api_key,
             secret_key=secret_key,
@@ -21,9 +22,7 @@ class TradingAnalysis:
         self.execution_engine = ExecutionEngine(
             api_key=api_key,
             secret_key=secret_key,
-            alpha_key=alpha_key,
-            paper_trading=True,
-            auto_execute=True
+            paper_trading=True
        )
 
         # Initial signal weights
@@ -41,14 +40,14 @@ class TradingAnalysis:
             'rev_growth': 0.15,
             'earnings_growth': 0.18,
             'roe_signal': 0.15,
-            'debt_to_equity;': 0.12,
+            'debt_to_equity': 0.12,
             'pb_ratio': 0.12,
             'current_ratio': 0.08 
         }
 
         if vol_regime == 'high':
             self.layer_weights = {
-                'techincal': 0.7,
+                'technical': 0.7,
                 'fundamental': 0.3
             }
         else:
@@ -346,18 +345,18 @@ class TradingAnalysis:
             logger.info(f"    ✗ Insufficient data for {symbol}\n")
             return None
         
-        overview = self.execution_engine.get_alpha_data('OVERVIEW', symbol)
+        overview = self.execution_engine.get_yfinance_data('OVERVIEW', symbol)
         if overview is None:
             print(f"    ✗ No overview data for {symbol}")
             logger.info(f"    ✗ No overview data for {symbol}\n")
 
-        balance_sheet = self.execution_engine.get_alpha_data('BALANCE_SHEET', symbol)
-        if balance_sheet is None or len(balance_sheet['quarterly_reports']) < 8:
+        balance_sheet = self.execution_engine.get_yfinance_data('BALANCE_SHEET', symbol)
+        if balance_sheet is None or len(balance_sheet['quarterlyReports']) < 8:
             print(f"    ✗ No balance sheet data for {symbol}")
             logger.info(f"    ✗ No balance sheet data for {symbol}\n")
 
-        income_statement = self.execution_engine.get_alpha_data('INCOME_STATEMENT', symbol)
-        if income_statement is None or len(income_statement['quarterly_reports']) < 8:
+        income_statement = self.execution_engine.get_yfinance_data('INCOME_STATEMENT', symbol)
+        if income_statement is None or len(income_statement['quarterlyReports']) < 8:
             print(f"    ✗ No income statement data for {symbol}")
             logger.info(f"    ✗ No income statement data for {symbol}\n")
 
@@ -381,16 +380,16 @@ class TradingAnalysis:
 
         risk_metrics = self.calculate_risk_metrics(data)
 
-        technical_signal = {
+        technical_signal = (
             sma_signal * sma_confidence * self.technical_weights['sma_crossover'] +
             rsi_signal * rsi_confidence * self.technical_weights['rsi_signal'] +
             vol_signal * vol_confidence * self.technical_weights['volume_signal'] +
             macd_signal * macd_confidence * self.technical_weights['macd_signal'] +
             bollinger_signal * bollinger_confidence * self.technical_weights['bollinger_signal'] +
             stochastic_signal * stochastic_confidence * self.technical_weights['stochastic_signal']
-        }
+        )
 
-        fundamental_signal = {
+        fundamental_signal = (
             pe_signal * pe_confidence * self.fundamental_weights['pe_ratio'] +
             pb_signal * pb_confidence * self.fundamental_weights['pb_ratio'] +
             roe_signal * roe_confidence * self.fundamental_weights['roe_signal'] +
@@ -398,18 +397,18 @@ class TradingAnalysis:
             dte_signal * dte_confidence * self.fundamental_weights['debt_to_equity'] +
             rev_growth_signal * rev_growth_confidence * self.fundamental_weights['rev_growth'] +
             earnings_singal * earnings_confidence * self.fundamental_weights['earnings_growth']
-        }
+        )
 
-        technical_confidence = {
-            sma_confidence * self.technucal_weights['sma_crossover'] +
+        technical_confidence = (
+            sma_confidence * self.technical_weights['sma_crossover'] +
             rsi_confidence * self.technical_weights['rsi_signal'] +
             vol_confidence * self.technical_weights['volume_signal'] +
             macd_confidence * self.technical_weights['macd_signal'] +
             bollinger_confidence * self.technical_weights['bollinger_signal'] +
             stochastic_confidence * self.technical_weights['stochastic_signal']
-        }
+        )
 
-        fundamental_confidence = {
+        fundamental_confidence = (
             pe_confidence * self.fundamental_weights['pe_ratio'] +
             pb_confidence * self.fundamental_weights['pb_ratio'] +
             roe_confidence * self.fundamental_weights['roe_signal'] +
@@ -417,7 +416,7 @@ class TradingAnalysis:
             dte_confidence * self.fundamental_weights['debt_to_equity'] +
             rev_growth_confidence * self.fundamental_weights['rev_growth'] +
             earnings_confidence * self.fundamental_weights['earnings_growth']
-        }
+        )
 
         total_signal = (
             technical_signal * self.layer_weights['technical'] +
@@ -669,7 +668,6 @@ class TradingAnalysis:
             current_sma = sma.iloc[-1]
             current_upper = upper_band.iloc[-1]
             current_lower = lower_band.iloc[-1]
-            current_std = std.iloc[-1]
 
             # Previous values
             previous_price = data['close'].iloc[-2] if len(data) > 1 else current_price
@@ -979,7 +977,7 @@ class TradingAnalysis:
             print(f"Error calculating Debt to Equity Ratio: {e}")
             return 0, 0
         
-    def calculate_weighted_revenue_growth(quarters):
+    def calculate_weighted_revenue_growth(self, quarters):
         """
         Calculate the year-over-year revenue growth with recent quarters
         weighted more heavily
@@ -1004,7 +1002,7 @@ class TradingAnalysis:
         weighted_growth = sum(rate * weight for rate, weight in zip(yoy_rates, weights))
         return weighted_growth
             
-    def calculate_revenue_growth_signal(self, income_statement):
+    def calculate_revenue_growth(self, income_statement):
         """Calculate the year-over-year revenue growth"""
         try:
             quarterly_reports = income_statement.get('quarterlyReports', [])
@@ -1038,7 +1036,7 @@ class TradingAnalysis:
             print(f"Error calculating Revenue Growth: {e}")
             return 0, 0
 
-    def earnings_growth_calculator(current, previous):
+    def earnings_growth_calculator(self, current, previous):
         """Handle negative earnings gracefully"""
 
         if previous <= 0 and current > 0:

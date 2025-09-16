@@ -1,13 +1,13 @@
 import alpaca_trade_api as tradeapi
 import time
 import requests
+import yfinance as yf
 
 class ExecutionEngine:
-    def __init__(self, api_key, secret_key, alpha_key, paper_trading=True):
+    def __init__(self, api_key, secret_key, paper_trading=True):
         base_url = 'https://paper-api.alpaca.markets' if paper_trading else 'https://api.alpaca.markets'
         self.api = tradeapi.REST(key_id=api_key, secret_key=secret_key, base_url=base_url)
         self.paper_trading = paper_trading
-        self.alpha_key = alpha_key
 
     def get_account_info(self):
         """Get current account info"""
@@ -186,11 +186,23 @@ class ExecutionEngine:
         except Exception as e:
             return {'success': False, 'error':  {str(e)}}
         
-    def get_alpha_data(self, function, symbol):
+    def get_yfinance_data(self, function, symbol):
         """
-        Get data from Alpha Vantage
+        Get data from yFinance
         functions: OVERVIEW | BALANCE_SHEET | INCOME_STATEMENT
         """
-        url = f'https://www.alphavantage.co/query?function={function}&symbol={symbol}&apikey={self.alpha_key}'
-        response = requests.get(url)
-        return response.json()
+        
+        try:
+            ticker = yf.Ticker(symbol)
+            
+            if function == 'OVERVIEW':
+                data = ticker.info
+            elif function == 'BALANCE_SHEET':
+                data = ticker.balance_sheet.to_dict()
+            elif function == 'INCOME_STATEMENT':
+                data = ticker.financials.to_dict()
+            else:
+                return {}
+        except Exception as e:
+            print(f"Error fetching data from yFinance: {e}")
+            return {}
