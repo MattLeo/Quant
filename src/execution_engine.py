@@ -1,6 +1,6 @@
 import alpaca_trade_api as tradeapi
 import time
-import requests
+import pandas as pd
 import yfinance as yf
 
 class ExecutionEngine:
@@ -185,24 +185,151 @@ class ExecutionEngine:
             }
         except Exception as e:
             return {'success': False, 'error':  {str(e)}}
-        
+    """      
     def get_yfinance_data(self, function, symbol):
-        """
+        """"""
         Get data from yFinance
         functions: OVERVIEW | BALANCE_SHEET | INCOME_STATEMENT
-        """
+        """"""
         
         try:
             ticker = yf.Ticker(symbol)
             
             if function == 'OVERVIEW':
                 data = ticker.info
+                if not data:
+                    return None
+                overview_data = {
+                    'PERatio': data.get('trailingPE', data.get('forwardPE', 0)),
+                    'PriceToBookRatio': data.get('priceToBook', 0),
+                    'Symbol': data.get('symbol', symbol),
+                    'MarketCapitalization': data.get('marketCap', 0),
+                    'BookValue': data.get('bookValue', 0),
+                    'DividendYield': data.get('dividendYield', 0),
+                    'EPS': data.get('trailingEps', data.get('forwardEps', 0))
+                }
+                return overview_data
             elif function == 'BALANCE_SHEET':
-                data = ticker.balance_sheet.to_dict()
+                balance_sheet = ticker.balance_sheet
+                if balance_sheet is None or len(balance_sheet) == 0:
+                    return None
+                
+                quarterly_reports = []
+                for date_col in balance_sheet.columns:
+                    bs_data = balance_sheet[date_col]
+                    report = {
+                    'fiscalDateEnding': date_col.strftime('%Y-%m-%d'),
+                    'totalAssets': bs_data.get('Total Assets', 0),
+                    'totalCurrentAssets': bs_data.get('Current Assets', 0),
+                    'totalCurrentLiabilities': bs_data.get('Current Liabilities', 0),
+                    'totalLiabilities': bs_data.get('Total Liabilities Net Minority Interest', 0),
+                    'totalDebt': bs_data.get('Total Debt', 0),
+                    }
+                    quarterly_reports.append(report)
+                return {'quarterlyReports': quarterly_reports}
+            
             elif function == 'INCOME_STATEMENT':
-                data = ticker.financials.to_dict()
+                financials = ticker.financials
+                if financials is None or len(financials) == 0:
+                    return None
+                
+                quarterly_reports = []
+                for date_col in financials.columns:
+                    income_statement = financials[date_col]
+                    report = {
+                    'fiscalDateEnding': date_col.strftime('%Y-%m-%d'),
+                    'totalRevnue': income_statement.get('Total Revenue', 0),
+                    'netIncome': income_statement.get('Net Income', 0),
+                    }
+                    quarterly_reports.append(report)
+                return {'quarterlyReports': quarterly_reports}
             else:
                 return {}
         except Exception as e:
             print(f"Error fetching data from yFinance: {e}")
             return {}
+    """
+
+    def get_yfinance_data(self, function, symbol):
+        """
+        Get extended historical data from yFinance
+        """
+        try:
+            ticker = yf.Ticker(symbol)
+            
+            if function == 'OVERVIEW':
+                info = ticker.info
+                if not info:
+                    return None
+                return {
+                    'PERatio': info.get('trailingPE', info.get('forwardPE', 0)),
+                    'PriceToBookRatio': info.get('priceToBook', 0), 
+                    'ReturnOnEquityTTM': info.get('returnOnEquity', 0),
+                }
+                
+            elif function == 'BALANCE_SHEET':
+                quarterly_bs = ticker.quarterly_balance_sheet
+                annual_bs = ticker.balance_sheet 
+                
+                all_data = pd.concat([quarterly_bs, annual_bs], axis=1).sort_index(axis=1, ascending=False)
+                
+                if all_data is None or all_data.empty:
+                    return None
+                
+                print(f"DEBUG - Combined balance sheet columns: {len(all_data.columns)}")
+                
+                quarterly_reports = []
+                for date_col in all_data.columns[:8]: 
+                    report = {'fiscalDateEnding': date_col.strftime('%Y-%m-%d')}
+                    
+                    if 'Total Assets' in all_data.index:
+                        report['totalAssets'] = all_data.loc['Total Assets', date_col]
+                    if 'Current Assets' in all_data.index:
+                        report['totalCurrentAssets'] = all_data.loc['Current Assets', date_col]
+                    if 'Current Liabilities' in all_data.index:
+                        report['totalCurrentLiabilities'] = all_data.loc['Current Liabilities', date_col]
+                    if 'Total Liabilities Net Minority Interest' in all_data.index:
+                        report['totalLiabilities'] = all_data.loc['Total Liabilities Net Minority Interest', date_col]
+                    if 'Total Debt' in all_data.index:
+                        report['totalDebt'] = all_data.loc['Total Debt', date_col]
+                    
+                    for key in ['totalAssets', 'totalCurrentAssets', 'totalCurrentLiabilities', 'totalLiabilities', 'totalDebt']:
+                        if key not in report:
+                            report[key] = 0
+                            
+                    quarterly_reports.append(report)
+                
+                print(f"DEBUG - Final balance sheet reports: {len(quarterly_reports)}")
+                return {'quarterlyReports': quarterly_reports}
+                
+            elif function == 'INCOME_STATEMENT':
+                quarterly_fin = ticker.quarterly_financials
+                annual_fin = ticker.financials
+                
+                all_data = pd.concat([quarterly_fin, annual_fin], axis=1).sort_index(axis=1, ascending=False)
+                
+                if all_data is None or all_data.empty:
+                    return None
+                    
+                print(f"DEBUG - Combined income statement columns: {len(all_data.columns)}")
+                
+                quarterly_reports = []
+                for date_col in all_data.columns[:8]: 
+                    report = {'fiscalDateEnding': date_col.strftime('%Y-%m-%d')}
+                    
+                    if 'Total Revenue' in all_data.index:
+                        report['totalRevenue'] = all_data.loc['Total Revenue', date_col]
+                    if 'Net Income' in all_data.index:
+                        report['netIncome'] = all_data.loc['Net Income', date_col]
+                    
+                    for key in ['totalRevenue', 'netIncome']:
+                        if key not in report:
+                            report[key] = 0
+                            
+                    quarterly_reports.append(report)
+                
+                return {'quarterlyReports': quarterly_reports}
+                
+        except Exception as e:
+            print(f"ERROR fetching data from yFinance for {symbol}: {e}")
+            return None
