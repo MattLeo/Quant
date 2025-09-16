@@ -276,8 +276,6 @@ class ExecutionEngine:
                 if all_data is None or all_data.empty:
                     return None
                 
-                print(f"DEBUG - Combined balance sheet columns: {len(all_data.columns)}")
-                
                 quarterly_reports = []
                 for date_col in all_data.columns[:8]: 
                     report = {'fiscalDateEnding': date_col.strftime('%Y-%m-%d')}
@@ -299,7 +297,6 @@ class ExecutionEngine:
                             
                     quarterly_reports.append(report)
                 
-                print(f"DEBUG - Final balance sheet reports: {len(quarterly_reports)}")
                 return {'quarterlyReports': quarterly_reports}
                 
             elif function == 'INCOME_STATEMENT':
@@ -311,8 +308,6 @@ class ExecutionEngine:
                 if all_data is None or all_data.empty:
                     return None
                     
-                print(f"DEBUG - Combined income statement columns: {len(all_data.columns)}")
-                
                 quarterly_reports = []
                 for date_col in all_data.columns[:8]: 
                     report = {'fiscalDateEnding': date_col.strftime('%Y-%m-%d')}

@@ -5,6 +5,7 @@ import alpaca_trade_api as tradeapi
 import time
 import logging
 from execution_engine import ExecutionEngine
+from regime_detector import MarketRegimeDetector
 
 
 logger = logging.getLogger("console_log")
@@ -24,6 +25,8 @@ class TradingAnalysis:
             secret_key=secret_key,
             paper_trading=True
        )
+        
+        self.regime_detector = MarketRegimeDetector()
 
         # Initial signal weights
         self.technical_weights = {
@@ -56,9 +59,91 @@ class TradingAnalysis:
                 'fundamental': 0.7
             }
 
+        self.current_regime_analysis = None
+        self.last_regime_check = None
+
         # Buy/Sell Thresholds
         self.buy_threshold = 0.3
         self.sell_threshold = -0.3
+
+
+    def update_market_regime(self, force_update=False):
+        """Update market regime analysis"""
+        if(not force_update and
+           self.last_regime_check and
+           (datetime.now() - self.last_regime_check).days < 1):
+            return self.current_regime_analysis
+        
+        print("[*] Updating market regime analysis...")
+        self.current_regime_analysis = self.regime_detector.determine_overall_regime()
+        self.last_regime_check = datetime.now()
+
+        if self.current_regime_analysis:
+            self.layer_weights = self.current_regime_analysis['strategy_weights']
+            regime = self.current_regime_analysis['regime']
+            self.adjust_technical_weights_by_regime(regime)
+
+        return self.current_regime_analysis
+
+    def adjust_technical_weights_by_regieme(self, regime):
+        """Adjust the technical indicator weighting based on market regime"""
+        if regime == 'high_volitility':
+            self.technical_weights = {
+                'rsi_signal': 0.25,
+                'macd_signal': 0.22,
+                'bollinger_signal': 0.20,
+                'stochastic_signal': 0.18,
+                'sma_crossover': 0.10,
+                'volume_signal': 0.05
+            }
+
+        elif regime == 'low_volitility':
+            self.technical_weights = {
+                'sma_crossover': 0.3,
+                'macd_signal': 0.25,
+                'volume_signal': 0.15,
+                'bollinger_signal': 0.12,
+                'rsi_signal': 0.1,
+                'stochastic_signal': 0.08
+            }
+
+        elif regime == 'trending_bullish':
+            self.technical_weights = {
+                'macd_signal': 0.28,
+                'sma_crossover': 0.25,
+                'volume_signal': 0.18,
+                'stochastic_signal': 0.15,
+                'volume_signal': 0.12,
+                'sma_crossover': 0.05
+            }
+
+        else: # transitional regime
+            self.technical_weights = {
+                'sma_crossover': 0.18,
+                'rsi_signal': 0.18,
+                'macd_signal': 0.18,
+                'bollinger_signal': 0.16,
+                'stochastic_signal': 0.15,
+                'volume_signal': 0.15
+            }
+
+    def set_thresholds(self, regime):
+        """Adjust buy/sell signal thresholds based on market regime"""
+        if regime == 'high_volitility':
+            self.buy_threshold = 0.65
+            self.sell_threshold = -0.55
+        elif regime == 'low_volitility':
+            self.buy_threshold = 0.45
+            self.sell_threshold = -0.65
+        elif regime == 'trending_bullish':
+            self.buy_threshold = 0.4
+            self.sell_threshold = -0.7
+        elif regime == 'trending_bearish':
+            self.buy_threshold = 0.75
+            self.sell_threshold = -0.4
+        else: # transitional market
+            self.buy_threshold = 0.55
+            self.sell_threshold = -0.6
 
     def get_starter_stocks(self):
         """Layer 1: Basic analysis of popular stocks"""

@@ -87,6 +87,13 @@ class TradingManager:
     
     def _find_new_opportunities(self, universe_type):
         """Phase 2: Find new investement opportunities"""
+
+        regime_analysis = self.framework.update_market_regime()
+        regime = regime_analysis['overall_regime'] if regime_analysis else None
+        if regime_analysis:
+            print(f"Current Market Regime: {regime}")
+            self.framework.set_thresholds(regime)
+
         results = self.framework.run_analysis(universe_type = universe_type)
         recommendations = self.framework.generate_recommendations(results)
         self.dao.save_recommendations_snapshot(recommendations['buy_list'], recommendations['sell_list'], recommendations['hold_list'])
