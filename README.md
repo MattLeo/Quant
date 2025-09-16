@@ -128,18 +128,18 @@ fundamental_weights = {
 ### Sprint 3: Risk Management & Fundamental Layer 🚧
 - [x] Position sizing logic improvements
 - [x] Stop-loss implementation
-- [ ] Risk Management configuration
-- [ ] Portfolio-level risk constraints
-- [ ] Fundamental analysis layer:
+- [x] Risk Management configuration (pushed back)
+- [x] Portfolio-level risk constraints (pushed back)
+- [x] Fundamental analysis layer:
   - [x] P/E Ratio analysis
   - [x] P/B Ratio evaluation
-  - [ ] Debt-to-Equity ratio assessment
+  - [x] Debt-to-Equity ratio assessment
   - [x] Current ratio liquidity analysis
-  - [ ] Revenue growth tracking
-  - [ ] Earnings growth analysis
+  - [x] Revenue growth tracking
+  - [x] Earnings growth analysis
   - [x] ROE measurements
-- [ ] Combined Technical + Fundamental weighting
-- [ ] Market regime detection and switching
+- [x] Combined Technical + Fundamental weighting
+- [x] Market regime detection and switching
 - [ ] Growth capture timing optimization
 - [ ] User configuration interface
 - [ ] Update workflow for deployed instances
