@@ -130,20 +130,20 @@ class TradingAnalysis:
     def set_thresholds(self, regime):
         """Adjust buy/sell signal thresholds based on market regime"""
         if regime == 'high_volitility':
-            self.buy_threshold = 0.65
-            self.sell_threshold = -0.55
+            self.buy_threshold = 0.16
+            self.sell_threshold = -0.11
         elif regime == 'low_volitility':
-            self.buy_threshold = 0.45
-            self.sell_threshold = -0.65
+            self.buy_threshold = 0.11
+            self.sell_threshold = -0.36
         elif regime == 'trending_bullish':
-            self.buy_threshold = 0.4
-            self.sell_threshold = -0.7
+            self.buy_threshold = 0.1
+            self.sell_threshold = -0.18
         elif regime == 'trending_bearish':
-            self.buy_threshold = 0.75
-            self.sell_threshold = -0.4
+            self.buy_threshold = 0.18
+            self.sell_threshold = -0.09
         else: # transitional market
-            self.buy_threshold = 0.55
-            self.sell_threshold = -0.6
+            self.buy_threshold = 0.13
+            self.sell_threshold = -0.13
 
     def get_starter_stocks(self):
         """Layer 1: Basic analysis of popular stocks"""

@@ -20,9 +20,11 @@ class TradingManager:
         phase1_results = self._manage_existing_positions()
 
         executed_sells = []
+        failed_sells = []
 
         if phase1_results.get('executed_sells'):
             executed_sells = phase1_results['executed_sells']
+
 
         print("=== PHASE 2: NEW OPPORTUNITIES ===")
         phase2_results = self._find_new_opportunities(universe_type)
@@ -42,7 +44,7 @@ class TradingManager:
         }
     
     def _manage_existing_positions(self):
-        """Phase 1: manage existing positions"""
+        """Check for stop losses, trailing stops, and sell recommendations"""
         active_positions = self.dao.get_active_positions()
 
         if not active_positions:
@@ -50,6 +52,7 @@ class TradingManager:
             return {
                 'positions_checked': 0,
                 'stop_losses_triggered': 0,
+                'signal_sells_triggered': 0,
                 'trailing_stops_updated': 0
             }
         
@@ -58,33 +61,74 @@ class TradingManager:
         position_symbols = [pos.symbol for pos in active_positions]
         current_prices = self._get_current_prices(position_symbols)
 
-        # Stop-Losses
+        owned_symbols = [pos.symbol for pos in active_positions]
+        sell_analysis = self.framework.run_analysis(universe_type='owned_positions', symbols=owned_symbols)
+        sell_recommendations = self.framework.generate_recommendations(sell_analysis)['sell_list']
+        
+        symbols_to_sell = set([stock['symbol'] for stock in sell_recommendations])
+        print(f"Analysis recommends selling: {len(symbols_to_sell)} positions")
+
         stop_triggers = self._check_stop_losses(current_prices)
         executed_sells = []
 
         if stop_triggers:
             print(f"Found {len(stop_triggers)} positions with stop loss triggered.")
             executed_sells = self._execute_stop_loss_sells(stop_triggers)
-
+            
+            sold_symbols = set([sell['symbol'] for sell in executed_sells])
+            symbols_to_sell -= sold_symbols
+            
             for sell in executed_sells:
                 print(f"Stop loss executed: {sell['symbol']} - Loss: ${sell['loss']:.2f}")
         else:
             print("No stop losses triggered.")
 
-        # Trailing stops
         updated_stops = self._update_trailing_stops(current_prices)
         if updated_stops:
             print(f"Updated trailing stops for {len(updated_stops)} positions.")
 
+        if symbols_to_sell and self.execution_engine:
+            print(f"Executing {len(symbols_to_sell)} signal-based sells...")
+            
+            for symbol in symbols_to_sell:
+                position = next((pos for pos in active_positions if pos.symbol == symbol), None)
+                if position:
+                    order_result = self.execution_engine.place_sell_order(
+                        symbol=symbol,
+                        quantity=position.quantity,
+                        reason='SELL_SIGNAL'
+                    )
+                    
+                    if order_result['success']:
+                        trade_id = self.dao.record_trade(
+                            position_id=position.id,
+                            symbol=symbol,
+                            action='SELL',
+                            quantity=position.quantity,
+                            price=order_result['filled_avg_price'],
+                            reason='SELL_SIGNAL'
+                        )
+                        self.dao.close_position(position.id)
+                        
+                        executed_sells.append({
+                            'symbol': symbol,
+                            'quantity': position.quantity,
+                            'price': order_result['filled_avg_price'],
+                            'reason': 'SELL_SIGNAL',
+                            'trade_id': trade_id
+                        })
+                        print(f"Signal sell executed: {symbol} at ${order_result['filled_avg_price']:.2f}")
+
         return {
             'positions_checked': len(active_positions),
-            'stop_losses_triggered': len(executed_sells),
+            'stop_losses_triggered': len([s for s in executed_sells if s.get('reason') == 'STOP_LOSS']),
+            'signal_sells_triggered': len([s for s in executed_sells if s.get('reason') == 'SELL_SIGNAL']),
             'trailing_stops_updated': len(updated_stops),
             'executed_sells': executed_sells,
             'updated_stops': updated_stops,
-            'stop_triggers': stop_triggers
+            'stop_triggers': stop_triggers if stop_triggers else []
         }
-    
+        
     def _find_new_opportunities(self, universe_type):
         """Phase 2: Find new investement opportunities"""
 
