@@ -62,8 +62,9 @@ class TradingManager:
         current_prices = self._get_current_prices(position_symbols)
 
         owned_symbols = [pos.symbol for pos in active_positions]
-        sell_analysis = self.framework.run_analysis(universe_type='owned_positions', symbols=owned_symbols)
-        sell_recommendations = self.framework.generate_recommendations(sell_analysis)['sell_list']
+        sell_analysis = self.framework.run_analysis(universe_type='starter')
+        all_recommendations = self.framework.generate_recommendations(sell_analysis)['sell_list']
+        sell_recommendations = [stock for stock in all_recommendations if stock['symbol'] in owned_symbols]
         
         symbols_to_sell = set([stock['symbol'] for stock in sell_recommendations])
         print(f"Analysis recommends selling: {len(symbols_to_sell)} positions")
@@ -128,7 +129,7 @@ class TradingManager:
             'updated_stops': updated_stops,
             'stop_triggers': stop_triggers if stop_triggers else []
         }
-        
+            
     def _find_new_opportunities(self, universe_type):
         """Phase 2: Find new investement opportunities"""
 
