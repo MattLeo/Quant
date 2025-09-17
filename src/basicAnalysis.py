@@ -915,6 +915,8 @@ class TradingAnalysis:
     def calculate_pe(self, overview): 
         """Calculate the Price to Earnings signal for a stock"""
         try:
+            if overview is None:
+                return 0, 0
             try:
                 pe_ratio = float(overview.get('PERatio', 0))
             except (ValueError, TypeError):
@@ -960,15 +962,18 @@ class TradingAnalysis:
         
         except Exception as e:
             print(f"Error calculating Price to Book signal: {e}")
+            return 0, 0
 
     def calculate_roe(self, overview):
         """Calculate the Return on Equity signal for a stock"""
 
         try:
+            if overview is None:
+                return 0, 0, 0
             try:
                 roe = float(overview.get('ReturnOnEquityTTM', 0))
             except (ValueError, TypeError):
-                return 0, 0
+                return 0, 0, 0
 
             if roe > 0:
                 signal = min(0.8, max(-0.2, (roe - 10) / 12.5))
@@ -981,10 +986,14 @@ class TradingAnalysis:
 
         except Exception as e:
             print(f"Error calculating Return on Equity signal: {e}")
+            return 0, 0, 0
 
     def calculate_current_ratio(self, balance_sheet):
         """Calculate the Current Liquidity Ratio for a company"""
         try:
+            if balance_sheet is None:
+                return 0, 0
+            
             quarterly_report = balance_sheet.get('quarterlyReports', [])[0]
             if quarterly_report is None or len(quarterly_report) == 0:
                 return 0, 0
@@ -1018,6 +1027,9 @@ class TradingAnalysis:
     def calculate_debt_to_equity(self, balance_sheet, roe):
         """Calculate the Debt to Equity Ratio for a company"""
         try:
+            if balance_sheet is None:
+                return 0, 0
+            
             quarterly_report = balance_sheet.get('quarterlyReports', [])[0]
             if quarterly_report is None or len(quarterly_report) == 0:
                 return 0, 0
