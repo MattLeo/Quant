@@ -80,12 +80,12 @@ class TradingAnalysis:
 
         if self.current_regime_analysis:
             self.layer_weights = self.current_regime_analysis['strategy_weights']
-            regime = self.current_regime_analysis['regime']
+            regime = self.current_regime_analysis['overall_regime']
             self.adjust_technical_weights_by_regime(regime)
 
         return self.current_regime_analysis
 
-    def adjust_technical_weights_by_regieme(self, regime):
+    def adjust_technical_weights_by_regime(self, regime):
         """Adjust the technical indicator weighting based on market regime"""
         if regime == 'high_volitility':
             self.technical_weights = {
@@ -509,8 +509,8 @@ class TradingAnalysis:
         )
 
         total_confidence = (
-            technical_confidence + self.layer_weights['technical'] +
-            fundamental_confidence + self.layer_weights['fundamental']
+            technical_confidence * self.layer_weights['technical'] +
+            fundamental_confidence * self.layer_weights['fundamental']
         )
 
         # Risk adjustment

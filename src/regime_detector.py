@@ -39,21 +39,61 @@ class MarketRegimeDetector:
             return None
         
     def get_market_breadth_data(self):
-        """Calculate market breadth using major market indices"""
-        symbols = ['^GSPC', '^DJI', '^IXIC', '^RUT']
-        try:
-            data = {}
-            for symbol in symbols:
-                ticker_data = yf.download(symbol, period='60d', progress=False)
-                if len(ticker_data) > 0:
-                    ticker_data['sma_20'] = ticker_data['Close'].rolling(20).mean()
-                    ticker_data['above_sma'] = ticker_data['Close'] > ticker_data['sma_20']
-                    data[symbol] = ticker_data
-            return data
-        except Exception as e:
-            print(f"Error fetching market breadth data: {e}")
-            return None
-    
+            """Calculate market breadth using major market indices"""
+            symbols = ['^GSPC', '^DJI', '^IXIC', '^RUT']
+            try:
+                data = {}
+                for symbol in symbols:
+                    try:
+                        ticker_data = yf.download(symbol, period='60d', progress=False)
+                        
+                        if len(ticker_data) > 0:
+                            if isinstance(ticker_data.columns, pd.MultiIndex):
+                                ticker_data.columns = ticker_data.columns.droplevel(1)
+                            
+
+                            close_col = None
+                            for col in ticker_data.columns:
+                                if 'close' in str(col).lower():
+                                    close_col = col
+                                    break
+                            
+                            if close_col is None:
+                                print(f"Warning: No 'Close' column found for {symbol}")
+                                continue
+                            
+                            clean_data = ticker_data.copy()
+                            close_prices = clean_data[close_col].dropna()
+                            if len(close_prices) > 10:  # Need enough data points
+                                sma_20 = close_prices.rolling(window=20, min_periods=10).mean()
+                                valid_idx = close_prices.index.intersection(sma_20.dropna().index)
+                                
+                                if len(valid_idx) > 0:
+                                    above_sma = close_prices.loc[valid_idx] > sma_20.loc[valid_idx]
+                                    result_df = pd.DataFrame({
+                                        'Close': close_prices.loc[valid_idx],
+                                        'sma_20': sma_20.loc[valid_idx],
+                                        'above_sma': above_sma
+                                    })
+                                    
+                                    data[symbol] = result_df
+                                    print(f"Successfully processed {symbol}: {len(result_df)} data points")
+                                else:
+                                    print(f"Warning: No valid comparison data for {symbol}")
+                            else:
+                                print(f"Warning: Insufficient data for {symbol}")
+                        else:
+                            print(f"Warning: No data downloaded for {symbol}")
+                            
+                    except Exception as symbol_error:
+                        print(f"Error processing {symbol}: {symbol_error}")
+                        continue
+                        
+                return data
+            except Exception as e:
+                print(f"Error fetching market breadth data: {e}")
+                return {}
+        
     def get_sector_rotation_data(self):
         """Analyze sector ETFs performance for rotation patterns"""
         sector_etfs = [
@@ -70,7 +110,7 @@ class MarketRegimeDetector:
         ]
 
         try:
-            sector_performance = ()
+            sector_performance = {}
             for etf in sector_etfs:
                 data = yf.download(etf, period='30d', progress=False)
                 if len(data) > 0:
@@ -86,7 +126,7 @@ class MarketRegimeDetector:
         if vix_data is None or len(vix_data) == 0:
             return 'moderate', 0.5
         
-        current_vix = vix_data['Close'].iloc[-1]
+        current_vix = float(vix_data['Close'].iloc[-1])
         vix_ma_10 = vix_data['Close'].rolling(10).mean().iloc[-1]
         vix_momentum = (current_vix - vix_ma_10) / vix_ma_10
 
@@ -142,38 +182,62 @@ class MarketRegimeDetector:
         return market_breadth, confidence, breadth_metrics
     
     def calculate_sector_regime(self, sector_data):
-        """Analyze sector rotation patterns"""
-        if not sector_data:
-            return 'balanced', 0.5, {}
-        
-        returns = list(sector_data.values())
-        if len(returns) == 0:
-            return 'balanced', 0.5, {}
-        
-        return_std = np.std(returns)
-        return_range = max(returns) - min(returns)
-        sorted_sectors = sorted(sector_data.items(), key=lambda x: x[1], reverse=True)
-        leaders = dict(sorted_sectors[:3])
-        laggards = dict(sorted_sectors[-3:])
+            """Analyze sector rotation patterns"""
+            if not sector_data:
+                return 'balanced', 0.5, {}
+            
+            # Convert all values to simple floats to avoid pandas Series issues
+            returns = []
+            for key, value in sector_data.items():
+                try:
+                    # Handle both pandas Series and simple numbers
+                    if hasattr(value, 'iloc'):
+                        # It's a pandas Series, get the scalar value
+                        float_val = float(value.iloc[-1]) if len(value) > 0 else 0.0
+                    else:
+                        # It's already a number
+                        float_val = float(value)
+                    returns.append(float_val)
+                    print(f"Sector {key}: {float_val:.3f}")
+                except Exception as e:
+                    print(f"Warning: Could not convert {key} value {value}: {e}")
+                    continue
+            
+            if len(returns) == 0:
+                return 'balanced', 0.5, {}
+            
+            # Now these should work with simple floats
+            return_std = float(np.std(returns))
+            return_range = float(max(returns) - min(returns))
+            
+            # Create sorted list for leaders/laggards
+            sector_returns = [(key, float(val) if not hasattr(val, 'iloc') else float(val.iloc[-1]) if len(val) > 0 else 0.0) 
+                            for key, val in sector_data.items()]
+            sorted_sectors = sorted(sector_returns, key=lambda x: x[1], reverse=True)
+            
+            leaders = dict(sorted_sectors[:3])
+            laggards = dict(sorted_sectors[-3:])
 
-        if return_range > 0.15:
-            if max(returns) > 0.05:
-                sector_regime = 'risk_on_rotation'
-                confidence = 0.8
+            if return_range > 0.15:
+                if max(returns) > 0.05:
+                    sector_regime = 'risk_on_rotation'
+                    confidence = 0.8
+                else:
+                    sector_regime = 'risk_off_rotation'
+                    confidence = 0.8
             else:
-                sector_regime = 'risk_off_rotation'
-                confidence = 0.8
-        else:
-            sector_regime = 'balanced'
-            confidence = 0.6
+                sector_regime = 'balanced'
+                confidence = 0.6
 
-        return sector_regime, confidence, {
-            'leaders': leaders,
-            'laggards': laggards,
-            'dispersion': return_std,
-            'range': return_range
-        }
-    
+            print(f"Sector regime: {sector_regime}, range: {return_range:.3f}, max: {max(returns):.3f}")
+
+            return sector_regime, confidence, {
+                'leaders': leaders,
+                'laggards': laggards,
+                'dispersion': return_std,
+                'range': return_range
+            }
+
     def determine_overall_regime(self):
         """Combine all factors to determine overall market regime"""
         print("Determining market regime...")
@@ -199,14 +263,14 @@ class MarketRegimeDetector:
         )
 
         if vix_regime == 'high_vol' or (vix_regime == 'elevated_vol' and breadth_regime == 'weak_breadth'):
-            overall_regime = 'high_volitility'
+            overall_regime = 'high_volatility'
             strategy_weights = {
                 'technical': 0.71,
                 'fundamental': 0.29
             }
             # technical = 0.6, fundamental = 0.25, sentiment = 0.15
         elif vix_regime == 'low_vol' and breadth_regime in ['strong_breadth', 'neutral_breadth']:
-            overall_regime = 'low_volitility'
+            overall_regime = 'low_volatility'
             strategy_weights = {
                 'technical': 0.29,
                 'fundamental': 0.71
@@ -283,7 +347,7 @@ class MarketRegimeDetector:
         # VIX Analysis
         vix = analysis['components']['vix']
         print(f"   VIX Regime: {vix['regime']} (Confidence: {vix['confidence']:.1%})")
-        print(f"   Current VIX: {vix['current_value']:.1f} | Momentum: {vix['momentum']:.1%}")
+        print(f"   Current VIX: {vix['current_vix']:.1f} | Momentum: {vix['momentum']:.1%}")
         
         # Breadth Analysis  
         breadth = analysis['components']['breadth']
