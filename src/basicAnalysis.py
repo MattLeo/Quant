@@ -466,22 +466,22 @@ class TradingAnalysis:
         risk_metrics = self.calculate_risk_metrics(data)
 
         technical_signal = (
-            sma_signal * sma_confidence * self.technical_weights['sma_crossover'] +
-            rsi_signal * rsi_confidence * self.technical_weights['rsi_signal'] +
-            vol_signal * vol_confidence * self.technical_weights['volume_signal'] +
-            macd_signal * macd_confidence * self.technical_weights['macd_signal'] +
-            bollinger_signal * bollinger_confidence * self.technical_weights['bollinger_signal'] +
-            stochastic_signal * stochastic_confidence * self.technical_weights['stochastic_signal']
+            sma_signal * self.technical_weights['sma_crossover'] +
+            rsi_signal * self.technical_weights['rsi_signal'] +
+            vol_signal * self.technical_weights['volume_signal'] +
+            macd_signal * self.technical_weights['macd_signal'] +
+            bollinger_signal * self.technical_weights['bollinger_signal'] +
+            stochastic_signal * self.technical_weights['stochastic_signal']
         )
 
         fundamental_signal = (
-            pe_signal * pe_confidence * self.fundamental_weights['pe_ratio'] +
-            pb_signal * pb_confidence * self.fundamental_weights['pb_ratio'] +
-            roe_signal * roe_confidence * self.fundamental_weights['roe_signal'] +
-            current_signal * current_confidence * self.fundamental_weights['current_ratio'] +
-            dte_signal * dte_confidence * self.fundamental_weights['debt_to_equity'] +
-            rev_growth_signal * rev_growth_confidence * self.fundamental_weights['rev_growth'] +
-            earnings_singal * earnings_confidence * self.fundamental_weights['earnings_growth']
+            pe_signal * self.fundamental_weights['pe_ratio'] +
+            pb_signal * self.fundamental_weights['pb_ratio'] +
+            roe_signal * self.fundamental_weights['roe_signal'] +
+            current_signal * self.fundamental_weights['current_ratio'] +
+            dte_signal * self.fundamental_weights['debt_to_equity'] +
+            rev_growth_signal * self.fundamental_weights['rev_growth'] +
+            earnings_singal * self.fundamental_weights['earnings_growth']
         )
 
         technical_confidence = (
