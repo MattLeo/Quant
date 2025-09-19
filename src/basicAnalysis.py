@@ -553,13 +553,16 @@ class TradingAnalysis:
         }
         return result
     
-    def run_analysis(self, universe_type='starter', max_stocks=None, batch_size=50, save_progress=True, results_folder = 'analysis_results'):
+    def run_analysis(self, universe_type='starter', owned_stocks=None, max_stocks=None, batch_size=50, save_progress=True, results_folder = 'analysis_results'):
         """Run analysis on all stocks"""
         
         print("🚀 Starting Basic Analysis Stocks")
         print("=" * 50)
 
-        if universe_type == 'starter':
+        if owned_stocks:
+            print(f"Analyzing {len(owned_stocks)} owned positions")
+            stocks = owned_stocks
+        elif universe_type == 'starter':
             stocks = self.get_starter_stocks()
         elif universe_type == 'all':
             stocks = self.get_all_tradable_symbols()

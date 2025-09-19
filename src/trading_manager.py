@@ -62,7 +62,7 @@ class TradingManager:
         current_prices = self._get_current_prices(position_symbols)
 
         owned_symbols = [pos.symbol for pos in active_positions]
-        sell_analysis = self.framework.run_analysis(universe_type='starter')
+        sell_analysis = self.framework.run_analysis(universe_type=None, owned_stocks=position_symbols)
         all_recommendations = self.framework.generate_recommendations(sell_analysis)['sell_list']
         sell_recommendations = [stock for stock in all_recommendations if stock['symbol'] in owned_symbols]
         

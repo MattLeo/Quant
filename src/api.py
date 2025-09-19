@@ -113,6 +113,7 @@ def run_analysis():
         data = request.json
         universe_type = data.get('universe_type', 'filtered')
         execute_trades = data.get('execute_trades', False)
+
         results = trading_manager.run_full_analysis(universe_type, execute_trades)
         return jsonify(results)
     except Exception as e:
@@ -230,6 +231,65 @@ def sync_positions():
         else:
             return jsonify({"error": "Failed to sync positions", "details": result}), 500
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/config', methods=['GET'])
+def get_config():
+    """Get current configuration"""
+    try:
+        project_root = os.path.dirname(os.path.dirname(__file__))
+        config_path = f"{project_root}/config.json"
+
+        with open(config_path, 'r') as config_file:
+            config = json.load(config_file)
+        
+        frontend_config = {
+            'alpaca' : {
+                'api_key': config['alpaca']['api_key'],
+                'secret': config['alpaca']['secret'],
+                'paper_trading': config['alpaca']['paper_trading']
+            },
+            'settings': {
+                'results_folder': config['settings']['results_folder'],
+                'universe_type': config['settings']['universe_type'],
+                'risk_profile': config['settings']['risk_profile'],
+                'minimum_profit_percent': config['settings']['minimum_profit_percent'],
+                'auto_execute_trades': config['settings']['auto_execute_trades'],
+                'max_positions': config['settings']['max_positions'],
+                'position_size_percent': config['settings']['position_size_percent'],
+                'stop_loss_percent': config['settings']['stop_loss_percent'],
+                'take_profit_percent': config['settings']['take_profit_percent']
+            },
+            'notifications': {
+                'email_alerts': config['notifications']['email_alerts'],
+                'trade_confirmations': config['notifications']['trade_confirmations'],
+                'analysis_complete': config['notifications']['analysis_complete']
+            }
+        }
+
+        return jsonify(frontend_config)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/config', methods=['POST'])
+def save_config():
+    """Save users's configuration changes to config file"""
+    try:
+        new_config = request.json
+
+        if not new_config.get('alpaca').get('api_key') or not new_config.get('alpaca').get('secret'):
+            return jsonify({"error": "API key and secret are required"}), 400
+        
+        project_root = os.path.dirname(os.path.dirname(__file__))
+        config_path = f"{project_root}/config.json"
+
+        with open(config_path, 'w') as config_file:
+            json.dump(new_config, config_file, indent=4)
+        
+        return jsonify({"message": "Configuration saved successfully"})
+    
+    except Exception as e:
+        print(f"Error in saving config: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
