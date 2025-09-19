@@ -140,8 +140,8 @@ fundamental_weights = {
   - [x] ROE measurements
 - [x] Combined Technical + Fundamental weighting
 - [x] Market regime detection and switching
-- [ ] Growth capture timing optimization
-- [ ] User configuration interface
+- [x] Growth capture timing optimization
+- [x] User configuration interface
 - [ ] Update workflow for deployed instances
 
 ### Sprint 4: Optimization & UI Improvements 
