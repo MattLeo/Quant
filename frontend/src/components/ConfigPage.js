@@ -261,7 +261,7 @@ function ConfigPage() {
                                 value={config.settings.minimum_profit_percent}
                                 onChange={(e) => handleInputChange('settings', 'minimum_profit_percent', e.target.value)}
                                 error={!!errors.minimum_profit_percent}
-                                helperText={errors.minimum_profit_percent || 'Minimum profit to sell (percent)'}
+                                helperText={errors.minimum_profit_percent || 'Minimum profit (%) required for profitable sell'}
                                 margin="normal"
                                 inputProps={{endAdornment: <InputAdornment position="end">%</InputAdornment>}}
                             />
@@ -295,7 +295,7 @@ function ConfigPage() {
                                 value={config.settings.position_size_percent}
                                 onChange={(e) => handleInputChange('settings', 'position_size_percent', e.target.value)}
                                 error={!!errors.position_size_percent}
-                                helperText={errors.position_size_percent || 'Position size (percent)'}
+                                helperText={errors.position_size_percent || 'Position size (%) of total portfolio'}
                                 margin='normal'
                             />
 
@@ -307,22 +307,8 @@ function ConfigPage() {
                                 value={config.settings.stop_loss_percent}
                                 onChange={(e) => handleInputChange('settings', 'stop_loss_percent', e.target.value)}
                                 error={!!errors.stop_loss_percent}
-                                helperText={errors.stop_loss_percent || 'Automatic stop loss (percent)'}
+                                helperText={errors.stop_loss_percent || 'Percent of loss before automatic sell (%)'}
                                 margin='normal'
-                            />
-                            <TextField
-                                fullWidth
-                                label="Stop Loss (%)"
-                                type="number"
-                                inputProps={{ min: 0, max: 50, step: 0.1 }}
-                                value={config.settings.stop_loss_percent}
-                                onChange={(e) => handleInputChange('settings', 'stop_loss_percent', parseFloat(e.target.value) || 0)}
-                                error={!!errors.stop_loss_percent}
-                                helperText={errors.stop_loss_percent || 'Automatic stop loss percentage'}
-                                margin="normal"
-                                InputProps={{
-                                    endAdornment: <InputAdornment position="end">%</InputAdornment>
-                                }}
                             />
 
                             <TextField
