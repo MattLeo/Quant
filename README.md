@@ -62,7 +62,7 @@ technical_signal_weights = {
 }
 ```
 
-### Phase 3: Advanced 🚧 **(In Progress)**
+### Phase 3: Advanced ✅ **(Completed)**
 
 Multi-factor approach with fundamental analysis:
 
@@ -125,7 +125,7 @@ fundamental_weights = {
 - [x] Market hours trade execution handling
 - [x] Previous recommendation caching
 
-### Sprint 3: Risk Management & Fundamental Layer 🚧
+### Sprint 3: Risk Management & Fundamental Layer ✅
 - [x] Position sizing logic improvements
 - [x] Stop-loss implementation
 - [x] Risk Management configuration (pushed back)
@@ -142,9 +142,9 @@ fundamental_weights = {
 - [x] Market regime detection and switching
 - [x] Growth capture timing optimization
 - [x] User configuration interface
-- [ ] Update workflow for deployed instances
+- [x] Update workflow for deployed instances
 
-### Sprint 4: Optimization & UI Improvements 
+### Sprint 4: Optimization & UI Improvements 🚧
 - [ ] Enhanced portfolio detail screens
 - [ ] Performance visualization over time
 - [ ] Individual position charting (SMA, Bollinger, Volume, RSI)
