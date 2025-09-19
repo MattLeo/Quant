@@ -64,7 +64,7 @@ function ConfigPage() {
 
     const fetchConfig = async () => {
         try {
-            const response = await fetch('http://localhost:8282/api/config');
+            const response = await fetch('/api/config');
             if (response.ok) {
                 const data = await response.json();
                 setConfig(data);
@@ -110,7 +110,7 @@ function ConfigPage() {
 
         setSaving(true);
         try{
-            const response = await fetch('http://localhost:8282/api/config', {
+            const response = await fetch('/api/config', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

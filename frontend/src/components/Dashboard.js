@@ -6,7 +6,7 @@ import AnalysisControls from './AnalysisControls';
 import RecommendationsList from './RecommendationsList'
 import TradeHistory from './TradeHistory';
 
-const API_BASE = 'http://localhost:8282/api';
+const API_BASE = '/api';
 
 function Dashboard() {
     const [portfolio, setPortfolio] = useState(null);
